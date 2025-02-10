@@ -1,0 +1,46 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           http://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://www.springframework.org/schema/context
+                           http://www.springframework.org/schema/context/spring-context.xsd
+                           http://www.springframework.org/schema/mvc
+                           http://www.springframework.org/schema/mvc/spring-mvc.xsd">
+
+    <context:component-scan base-package="org.forum" />
+    <context:property-placeholder location="classpath:application.properties" />
+    <mvc:annotation-driven />
+
+    <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        <property name="prefix" value="/WEB-INF/templates/" />
+        <property name="suffix" value=".jsp" />
+    </bean>
+    <bean class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean"
+          id="entityManagerFactory">
+        <property name="packagesToScan" value="org.forum.model.entity" />
+        <property name="dataSource" ref="dataSource" />
+        <property name="jpaVendorAdapter">
+            <bean class="org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter" />
+        </property>
+        <property name="jpaProperties">
+            <props>
+                <prop key="hibernate.hbm2ddl.auto">${spring.jpa.hibernate.ddl-auto}</prop>
+                <prop key="hibernate.dialect">${spring.jpa.properties.hibernate.dialect}</prop>
+                <prop key="hibernate.show_sql">${spring.jpa.show-sql}</prop>
+            </props>
+        </property>
+    </bean>
+
+    <bean class="org.apache.commons.dbcp2.BasicDataSource" id="dataSource" destroy-method="close">
+        <property name="driverClassName" value="${spring.datasource.driver-class-name}" />
+        <property name="url" value="${spring.datasource.url}" />
+        <property name="username" value="${spring.datasource.username}" />
+        <property name="password" value="${spring.datasource.password}" />
+    </bean>
+
+    <bean class="org.springframework.orm.jpa.JpaTransactionManager" id="transactionManager">
+        <property name="entityManagerFactory" ref="entityManagerFactory" />
+    </bean>
+</beans>
