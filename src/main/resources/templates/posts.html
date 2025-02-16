@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Posts</title>
+    <link rel="stylesheet" th:href="@{/static/css/output.css}">
+</head>
+<body>
+<div th:replace="~{fragments/header :: header}"></div>
+
+<div class="p-4">
+    <div class="bg-white p-6 rounded-lg shadow-md">
+        <h2 class="text-2xl font-bold mb-4">Posts</h2>
+        <ul>
+            <li class="mb-2">Post 1</li>
+            <li class="mb-2">Post 2</li>
+            <li class="mb-2">Post 3</li>
+        </ul>
+    </div>
+</div>
+</body>
+</html>

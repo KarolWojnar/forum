@@ -7,18 +7,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
 @RequiredArgsConstructor
-@RequestMapping("/posts")
-public class PostController {
+@RequestMapping("/")
+public class MainController {
 
-
-    @GetMapping()
-    public String posts() {
-        return "posts";
+    @GetMapping
+    public String home() {
+        return "index";
     }
-
-    @GetMapping("/new")
-    public String newPost() {
-        return "new-post";
-    }
-
 }

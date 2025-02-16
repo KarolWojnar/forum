@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+    <link rel="stylesheet" th:href="@{/static/css/output.css}">
+</head>
+<body>
+<div th:replace="~{fragments/header :: header}"></div>
+<div class="p-4">
+    <div class="bg-white p-6 rounded-lg shadow-md max-w-md mx-auto">
+        <h2 class="text-2xl font-bold mb-4">Login</h2>
+        <form th:action="@{/login}" method="post">
+            <div class="mb-4">
+                <label class="block text-gray-700">Username</label>
+                <input type="text" name="username" class="w-full p-2 border rounded" required>
+            </div>
+            <div class="mb-4">
+                <label class="block text-gray-700">Password</label>
+                <input type="password" name="password" class="w-full p-2 border rounded" required>
+            </div>
+            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Login</button>
+        </form>
+        <p class="mt-4 text-center">
+            Don't have an account? <a href="/register" class="text-blue-500 hover:underline">Register here</a>.
+        </p>
+    </div>
+</div>
+</body>
+</html>

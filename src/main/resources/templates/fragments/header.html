@@ -1,0 +1,67 @@
+<header th:fragment="header">
+    <nav class="bg-gradient-to-r from-purple-600 to-blue-500 shadow-lg">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <div>
+                    <a href="/" class="text-white text-2xl font-bold hover:text-gray-200 transition duration-300">
+                        Home page
+                    </a>
+                </div>
+                <div class="hidden md:flex space-x-6">
+                    <a href="/posts" class="text-white hover:text-gray-200 transition duration-300">
+                        Posts
+                    </a>
+                </div>
+                <div class="hidden md:flex space-x-6">
+                    <a href="/posts/new" class="text-white hover:text-gray-200 transition duration-300">
+                        New Post
+                    </a>
+                </div>
+                <div class="hidden md:flex space-x-6">
+                    <a href="/admin" class="text-white hover:text-gray-200 transition duration-300">
+                        Admin Panel
+                    </a>
+                </div>
+                <div class="hidden md:flex space-x-6">
+                    <a href="/login" class="text-white hover:text-gray-200 transition duration-300">
+                        Login
+                    </a>
+                    <a href="/logout" class="text-white hover:text-gray-200 transition duration-300">
+                        Logout
+                    </a>
+                </div>
+                <div class="md:hidden">
+                    <button id="mobile-menu-button" class="text-white focus:outline-none">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div id="mobile-menu" class="md:hidden hidden mt-2 pb-4">
+                <a href="/posts" class="block text-white py-2 hover:bg-purple-700 transition duration-300">
+                    Posts
+                </a>
+                <a href="/new-post" class="block text-white py-2 hover:bg-purple-700 transition duration-300">
+                    New Post
+                </a>
+                <a href="/admin" class="block text-white py-2 hover:bg-purple-700 transition duration-300">
+                    Admin Panel
+                </a>
+                <a href="/login" class="block text-white py-2 hover:bg-purple-700 transition duration-300">
+                    Login
+                </a>
+                <a href="/logout" class="block text-white py-2 hover:bg-purple-700 transition duration-300">
+                    Logout
+                </a>
+            </div>
+        </div>
+    </nav>
+</header>
+
+<script>
+    document.getElementById('mobile-menu-button').addEventListener('click', function() {
+        const mobileMenu = document.getElementById('mobile-menu');
+        mobileMenu.classList.toggle('hidden');
+    });
+</script>
