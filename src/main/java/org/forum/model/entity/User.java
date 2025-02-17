@@ -4,6 +4,9 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+import java.util.UUID;
+
 @Entity
 @Data
 @Table(name = "users")
@@ -14,12 +17,21 @@ public class User {
     private Long id;
     @Column(unique = true, nullable = false)
     private String username;
-    private String role = "User";
+    private String role = "USER";
     @Column(unique = true, nullable = false)
     private String email;
     @Column(nullable = false)
     private String password;
-    private boolean isActivated = false;
+    private boolean activated = false;
+    @Column(nullable = false)
+    private LocalDateTime createDate;
+    @Column(nullable = false)
+    private String activationToken = UUID.randomUUID().toString();
+
+    @PrePersist
+    public void prePersist() {
+        createDate = LocalDateTime.now();
+    }
 
     public User(String username, String email, String password) {
         this.username = username;

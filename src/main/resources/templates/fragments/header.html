@@ -1,67 +1,84 @@
-<header th:fragment="header">
-    <nav class="bg-gradient-to-r from-purple-600 to-blue-500 shadow-lg">
-        <div class="container mx-auto px-4">
-            <div class="flex justify-between items-center py-4">
-                <div>
-                    <a href="/" class="text-white text-2xl font-bold hover:text-gray-200 transition duration-300">
-                        Home page
-                    </a>
-                </div>
-                <div class="hidden md:flex space-x-6">
-                    <a href="/posts" class="text-white hover:text-gray-200 transition duration-300">
-                        Posts
-                    </a>
-                </div>
-                <div class="hidden md:flex space-x-6">
-                    <a href="/posts/new" class="text-white hover:text-gray-200 transition duration-300">
-                        New Post
-                    </a>
-                </div>
-                <div class="hidden md:flex space-x-6">
-                    <a href="/admin" class="text-white hover:text-gray-200 transition duration-300">
-                        Admin Panel
-                    </a>
-                </div>
-                <div class="hidden md:flex space-x-6">
-                    <a href="/login" class="text-white hover:text-gray-200 transition duration-300">
-                        Login
-                    </a>
-                    <a href="/logout" class="text-white hover:text-gray-200 transition duration-300">
-                        Logout
-                    </a>
-                </div>
-                <div class="md:hidden">
-                    <button id="mobile-menu-button" class="text-white focus:outline-none">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
-                        </svg>
-                    </button>
-                </div>
+<div th:fragment="header" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.w3.org/1999/xhtml">
+    <nav class="bg-gradient-to-r from-purple-600 to-blue-500 shadow-md text-white">
+        <div class="container mx-auto px-4 py-2 flex justify-between">
+            <div class="flex items-start">
+                <a href="/" class="text-xl font-bold hover:text-purple-200 transition duration-300">
+                    Forum App
+                </a>
             </div>
-            <div id="mobile-menu" class="md:hidden hidden mt-2 pb-4">
-                <a href="/posts" class="block text-white py-2 hover:bg-purple-700 transition duration-300">
+
+            <div class="hidden md:flex space-x-6">
+                <a th:href="@{/posts}" class="hover:text-purple-200 transition duration-300">
                     Posts
                 </a>
-                <a href="/new-post" class="block text-white py-2 hover:bg-purple-700 transition duration-300">
+                <a th:href="@{/posts/new}" class="hover:text-purple-200 transition duration-300"
+                   sec:authorize="isAuthenticated()">
                     New Post
                 </a>
-                <a href="/admin" class="block text-white py-2 hover:bg-purple-700 transition duration-300">
+                <a th:href="@{/admin}" class="hover:text-purple-200 transition duration-300"
+                   sec:authorize="hasRole('ADMIN')">
                     Admin Panel
                 </a>
-                <a href="/login" class="block text-white py-2 hover:bg-purple-700 transition duration-300">
+                <a th:href="@{/login}" class="hover:text-purple-200 transition duration-300"
+                   sec:authorize="!isAuthenticated()">
                     Login
                 </a>
-                <a href="/logout" class="block text-white py-2 hover:bg-purple-700 transition duration-300">
+                <a th:href="@{/logout}" class="hover:text-purple-200 transition duration-300"
+                   sec:authorize="isAuthenticated()">
                     Logout
                 </a>
             </div>
+
+            <div class="md:hidden">
+                <button id="menu-button" class="text-white focus:outline-none">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <div id="mobile-menu" class="hidden md:hidden mt-2 rounded-lg">
+            <a th:href="@{/posts}" class="block py-2 px-4 text-white hover:bg-purple-900 transition duration-300">
+                Posts
+            </a>
+            <a th:href="@{/posts/new}" class="block py-2 px-4 text-white hover:bg-purple-900 transition duration-300"
+               sec:authorize="isAuthenticated()">
+                New Post
+            </a>
+            <a th:href="@{/admin}" class="block py-2 px-4 text-white hover:bg-purple-900 transition duration-300"
+               sec:authorize="hasRole('ADMIN')">
+                Admin Panel
+            </a>
+            <a th:href="@{/login}" class="block py-2 px-4 text-white hover:bg-purple-900 transition duration-300"
+               sec:authorize="!isAuthenticated()">
+                Login
+            </a>
+            <a th:href="@{/logout}" class="block py-2 px-4 text-white hover:bg-purple-900 transition duration-300"
+               sec:authorize="isAuthenticated()">
+                Logout
+            </a>
         </div>
     </nav>
-</header>
 
-<script>
-    document.getElementById('mobile-menu-button').addEventListener('click', function() {
-        const mobileMenu = document.getElementById('mobile-menu');
-        mobileMenu.classList.toggle('hidden');
-    });
-</script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const menuButton = document.getElementById('menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+
+            menuButton.addEventListener('click', function () {
+                mobileMenu.classList.toggle('hidden');
+            });
+
+            document.addEventListener('click', function (event) {
+                const isClickInsideMenu = mobileMenu.contains(event.target);
+                const isClickOnButton = menuButton.contains(event.target);
+
+                if (!isClickInsideMenu && !isClickOnButton && !mobileMenu.classList.contains('hidden')) {
+                    mobileMenu.classList.add('hidden');
+                }
+            });
+        });
+    </script>
+</div>

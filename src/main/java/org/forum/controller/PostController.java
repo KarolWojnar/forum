@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @RequestMapping("/posts")
 public class PostController {
 
-
     @GetMapping()
     public String posts() {
         return "posts";

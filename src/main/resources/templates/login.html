@@ -7,24 +7,59 @@
 </head>
 <body>
 <div th:replace="~{fragments/header :: header}"></div>
-<div class="p-4">
-    <div class="bg-white p-6 rounded-lg shadow-md max-w-md mx-auto">
-        <h2 class="text-2xl font-bold mb-4">Login</h2>
-        <form th:action="@{/login}" method="post">
-            <div class="mb-4">
-                <label class="block text-gray-700">Username</label>
-                <input type="text" name="username" class="w-full p-2 border rounded" required>
+    <div class="p-4">
+        <div class="bg-white p-6 rounded-lg max-w-md mx-auto shadow-2xl">
+            <h2 class="text-2xl font-bold mb-4">Login</h2>
+            <form th:action="@{/login}" method="post">
+                <div class="mb-4">
+                    <label class="block text-gray-700">Username</label>
+                    <label>
+                        <input type="text" name="username" class="w-full p-2 border rounded" th:value="${username}" required>
+                    </label>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700">Password</label>
+                    <label>
+                        <input type="password" name="password" class="w-full p-2 border rounded" required>
+                    </label>
+                </div>
+                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Login</button>
+            </form>
+            <p class="mt-4 text-center">
+                Don't have an account? <a th:href="@{/register}" class="text-blue-500 hover:underline">Register here</a>.
+            </p>
+        </div>
+        <div class="max-w-md mx-auto py-2 auto-dismiss">
+            <div th:if="${param.logout}" class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded-lg relative shadow-2xl" role="alert">
+                <span class="block sm:inline">You have been logged out successfully.</span>
             </div>
-            <div class="mb-4">
-                <label class="block text-gray-700">Password</label>
-                <input type="password" name="password" class="w-full p-2 border rounded" required>
+            <div th:if="${param.error}" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative shadow-2xl" role="alert">
+                <span class="block sm:inline">Invalid username or password. Please try again.</span>
             </div>
-            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Login</button>
-        </form>
-        <p class="mt-4 text-center">
-            Don't have an account? <a href="/register" class="text-blue-500 hover:underline">Register here</a>.
-        </p>
+            <div th:if="${success}" class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg relative shadow-2xl" role="alert">
+                <span class="block sm:inline">Account created. Verify your account via email.</span>
+            </div>
+            <div th:if="${param.expierd}" class="bg-amber-100 border border-amber-400 text-amber-600 px-4 py-3 rounded-lg relative shadow-2xl" role="alert">
+                <span class="block sm:inline">Invalid username or password. Please try again.</span>
+            </div>
+        </div>
     </div>
-</div>
 </body>
 </html>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const alerts = document.querySelectorAll('.auto-dismiss');
+
+        alerts.forEach(function(alert) {
+            setTimeout(function() {
+                alert.style.transition = 'opacity 0.5s ease-in-out';
+                alert.style.opacity = '0';
+
+                setTimeout(function() {
+                    alert.remove();
+                }, 500);
+            }, 3000);
+        });
+    });
+</script>
