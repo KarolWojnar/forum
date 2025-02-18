@@ -15,6 +15,7 @@ import org.springframework.ui.Model;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @EnableScheduling
@@ -33,7 +34,7 @@ public class UserService {
         return "login";
     }
 
-    private void saveUser(UserDto userDto, Model model) {
+    public void saveUser(UserDto userDto, Model model) {
         userDto.setPassword(passwordEncoder.encode(userDto.getPassword()));
         User user = userRepository.save(UserMapper.toEntity(userDto));
         emailService.sendEmail(userDto.getEmail(), user.getActivationToken());
@@ -61,10 +62,24 @@ public class UserService {
         return true;
     }
 
-    @Scheduled(fixedRate = 1000)
+    @Scheduled(cron = "0 0 * * * *")
     public void removeInactiveAccounts() {
         List<User> users = userRepository.findAllByActivatedFalseAndCreateDateBefore(LocalDateTime.now());
         log.info("Removing {} inactive accounts.", users.size());
         userRepository.deleteAll(users);
+    }
+
+    public String activateUser(String uid, Model model) {
+        User user = userRepository.findByActivationToken(uid).orElse(null);
+        if (user == null) {
+            model.addAttribute("error", "Invalid activation link.");
+        } else {
+            user.setActivated(true);
+            user.setActivationToken(UUID.randomUUID().toString());
+            userRepository.save(user);
+            model.addAttribute("success", "Account activated successfully.");
+            model.addAttribute("username", user.getUsername());
+        }
+        return "login";
     }
 }

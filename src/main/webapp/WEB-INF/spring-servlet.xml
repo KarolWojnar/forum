@@ -12,12 +12,14 @@
                            http://www.springframework.org/schema/data/jpa
                            https://www.springframework.org/schema/data/jpa/spring-jpa.xsd">
 
+
     <context:annotation-config />
     <mvc:annotation-driven />
-    <context:component-scan base-package="org.forum, org.forum.config" />
     <context:property-placeholder location="classpath:application.properties" />
+    <context:component-scan base-package="org.forum, org.forum.config" />
     <jpa:repositories base-package="org.forum.repository" />
     <mvc:resources mapping="/static/**" location="/static/" />
+
 
     <bean id="templateResolver" class="org.thymeleaf.spring6.templateresolver.SpringResourceTemplateResolver">
         <property name="prefix" value="classpath:/templates/"/>
@@ -78,4 +80,17 @@
         <property name="entityManagerFactory" ref="entityManagerFactory" />
     </bean>
     <bean id="securityConfiguration" class="org.forum.config.SecurityConfig" />
+
+    <bean id="mailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl">
+        <property name="port" value="${spring.mail.port}" />
+        <property name="host" value="${spring.mail.host}" />
+        <property name="username" value="${spring.mail.username}" />
+        <property name="password" value="${spring.mail.password}" />
+        <property name="javaMailProperties">
+            <props>
+                <prop key="mail.smtp.auth">${spring.mail.properties.mail.smtp.auth}</prop>
+                <prop key="mail.smtp.starttls.enable">${spring.mail.properties.mail.smtp.starttls.enable}</prop>
+            </props>
+        </property>
+    </bean>
 </beans>
