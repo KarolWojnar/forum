@@ -14,6 +14,7 @@ public class Activation {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @Column(unique = true, nullable = false)
     private String activationCode;
     @OneToOne
     @Setter

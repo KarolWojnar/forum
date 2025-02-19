@@ -2,8 +2,10 @@ package org.forum.service;
 
 import lombok.RequiredArgsConstructor;
 import org.forum.model.dto.UserDto;
+import org.forum.model.entity.Activation;
 import org.forum.model.entity.User;
 import org.forum.model.mapper.UserMapper;
+import org.forum.repository.ActivationRepository;
 import org.forum.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,10 +14,9 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.Model;
-
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
+import java.util.Optional;
 
 @Service
 @EnableScheduling
@@ -25,6 +26,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
+    private final ActivationRepository activationRepository;
 
     public String createUser(UserDto userDto, Model model) {
         if (!validateUser(userDto, model)) {
@@ -36,8 +38,10 @@ public class UserService {
 
     public void saveUser(UserDto userDto, Model model) {
         userDto.setPassword(passwordEncoder.encode(userDto.getPassword()));
-        User user = userRepository.save(UserMapper.toEntity(userDto));
-        emailService.sendEmail(userDto.getEmail(), user.getActivationToken());
+        Activation active = new Activation();
+        active.setUser(userRepository.save(UserMapper.toEntity(userDto)));
+        String token = activationRepository.save(active).getActivationCode();
+        emailService.sendEmail(userDto.getEmail(), token);
         model.addAttribute("success", "User created successfully.");
         model.addAttribute("username", userDto.getUsername());
     }
@@ -62,21 +66,24 @@ public class UserService {
         return true;
     }
 
-    @Scheduled(cron = "0 0 * * * *")
+    @Scheduled(cron = "0 * * * * *")
     public void removeInactiveAccounts() {
-        List<User> users = userRepository.findAllByActivatedFalseAndCreateDateBefore(LocalDateTime.now());
+        List<User> users = userRepository.findAllByActivatedFalseAndCreateDateBefore(LocalDateTime.now().minusDays(1));
+        List<Activation> activations = activationRepository.findAllByExpiresAtBefore(LocalDateTime.now());
         log.info("Removing {} inactive accounts.", users.size());
+        activationRepository.deleteAll(activations);
         userRepository.deleteAll(users);
     }
 
     public String activateUser(String uid, Model model) {
-        User user = userRepository.findByActivationToken(uid).orElse(null);
-        if (user == null) {
+        Optional<Activation> activation = activationRepository.findByActivationCode(uid);
+        if (activation.isEmpty()) {
             model.addAttribute("error", "Invalid activation link.");
         } else {
+            User user = activation.get().getUser();
             user.setActivated(true);
-            user.setActivationToken(UUID.randomUUID().toString());
             userRepository.save(user);
+            activationRepository.delete(activation.get());
             model.addAttribute("success", "Account activated successfully.");
             model.addAttribute("username", user.getUsername());
         }
