@@ -1,72 +1,75 @@
 package org.forum.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.forum.exception.UserException;
 import org.forum.model.dto.UserDto;
 import org.forum.model.entity.Activation;
 import org.forum.model.entity.User;
 import org.forum.model.mapper.UserMapper;
 import org.forum.repository.ActivationRepository;
 import org.forum.repository.UserRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.Model;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 @Service
 @EnableScheduling
+@Slf4j
 @RequiredArgsConstructor
 public class UserService {
-    private static final Logger log = LoggerFactory.getLogger(UserService.class);
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
     private final ActivationRepository activationRepository;
 
-    public String createUser(UserDto userDto, Model model) {
-        if (!validateUser(userDto, model)) {
-            return "register";
+    public String createUser(UserDto userDto, RedirectAttributes redirectAttributes) {
+        if (!validateUser(userDto, redirectAttributes)) {
+            return "redirect:/register";
         }
-        saveUser(userDto, model);
-        return "login";
+        saveUser(userDto, redirectAttributes);
+        return "redirect:/login";
     }
 
-    public void saveUser(UserDto userDto, Model model) {
+    public void saveUser(UserDto userDto, RedirectAttributes redirectAttributes) {
         userDto.setPassword(passwordEncoder.encode(userDto.getPassword()));
         Activation active = new Activation();
         active.setUser(userRepository.save(UserMapper.toEntity(userDto)));
         String token = activationRepository.save(active).getActivationCode();
         emailService.sendEmail(userDto.getEmail(), token);
-        model.addAttribute("success", "User created successfully.");
-        model.addAttribute("username", userDto.getUsername());
+        redirectAttributes.addFlashAttribute("success", "User created successfully.");
+        redirectAttributes.addFlashAttribute("username", userDto.getUsername());
     }
 
-    private boolean validateUser(UserDto userDto, Model model) {
+    private boolean validateUser(UserDto userDto, RedirectAttributes redirectAttributes) {
         if (userRepository.findByEmail(userDto.getEmail()).isPresent()) {
-            model.addAttribute("error", "Email already exists.");
+            redirectAttributes.addFlashAttribute("error", "Email already exists.");
             return false;
         } else if (userRepository.findByUsername(userDto.getUsername()).isPresent()) {
-            model.addAttribute("error", "Username already exists.");
+            redirectAttributes.addFlashAttribute("error", "Username already exists.");
             return false;
         } else if (!userDto.getPassword().equals(userDto.getConfirmPassword())) {
-            model.addAttribute("error", "Passwords do not match.");
+            redirectAttributes.addFlashAttribute("error", "Passwords do not match.");
             return false;
         } else if (userDto.getPassword().length() < 8) {
-            model.addAttribute("error", "Password must be at least 8 characters.");
+            redirectAttributes.addFlashAttribute("error", "Password must be at least 8 characters.");
             return false;
         } else if (userDto.getUsername().length() < 3) {
-            model.addAttribute("error", "Username must be at least 3 characters.");
+            redirectAttributes.addFlashAttribute("error", "Username must be at least 3 characters.");
             return false;
         }
         return true;
     }
 
-    @Scheduled(cron = "0 * * * * *")
+    @Scheduled(cron = "0 0 * * * *")
     public void removeInactiveAccounts() {
         List<User> users = userRepository.findAllByActivatedFalseAndCreateDateBefore(LocalDateTime.now().minusDays(1));
         List<Activation> activations = activationRepository.findAllByExpiresAtBefore(LocalDateTime.now());
@@ -88,5 +91,26 @@ public class UserService {
             model.addAttribute("username", user.getUsername());
         }
         return "login";
+    }
+
+    public User findAuthenticatedUser(Authentication auth, RedirectAttributes redAttrs) {
+        if (auth == null) {
+            redAttrs.addFlashAttribute("error", "Failed authentication.");
+            throw new UserException("Failed authentication");
+        }
+
+        Object principal = auth.getPrincipal();
+        if ((!(principal instanceof UserDetails userDetails))) {
+            redAttrs.addFlashAttribute("error", "Failed authentication.");
+            throw new UserException("Failed authentication");
+        }
+
+        User user = userRepository.findByUsername(userDetails.getUsername()).orElse(null);
+
+        if (user == null) {
+            redAttrs.addFlashAttribute("error", "Failed authentication.");
+            throw new UserException("Failed authentication");
+        }
+        return user;
     }
 }
