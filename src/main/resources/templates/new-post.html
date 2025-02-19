@@ -14,11 +14,11 @@
                 <form th:action="@{/posts/new}" method="post">
                     <div class="mb-4">
                         <label class="block text-gray-700">Title</label>
-                        <input type="text" name="title" class="w-full p-2 border rounded">
+                        <input type="text" name="title" class="w-full p-2 border rounded" required maxlength="100">
                     </div>
                     <div class="mb-4">
                         <label class="block text-gray-700">Content</label>
-                        <textarea name="content" class="w-full p-2 border rounded"></textarea>
+                        <textarea name="content" class="w-full p-2 border rounded" required maxlength="1000"></textarea>
                     </div>
                     <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Submit</button>
                 </form>

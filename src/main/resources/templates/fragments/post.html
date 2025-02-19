@@ -1,0 +1,12 @@
+<div th:fragment="details">
+    <div th:if="${#lists.size(details) > 0}" class="mt-6">
+        <h4 class="font-bold mb-4">Comments</h4>
+        <ul>
+            <li th:each="comment : ${details}" class="comment-box">
+                <p class="text-gray-800" th:text="${comment.content}">Comment content</p>
+                <p class="comment-author text-end" th:text="(${comment.author} ?: 'Anonymous')">Author</p>
+                <p class="comment-date text-end" th:text="${#temporals.format(comment.createDate, 'dd-MM-yyyy HH:mm')}">Date</p>
+            </li>
+        </ul>
+    </div>
+</div>

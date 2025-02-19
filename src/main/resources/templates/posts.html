@@ -1,22 +1,173 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<html xmlns:th="http://www.thymeleaf.org" lang="pl">
 <head>
     <meta charset="UTF-8">
     <title>Posts</title>
     <link rel="stylesheet" th:href="@{/static/css/output.css}">
+    <style>
+        .blurred {
+            filter: blur(4px);
+            transition: filter 0.3s ease;
+        }
+        .expanded-animation {
+            position: fixed;
+            z-index: 60;
+            background-color: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+            overflow: auto;
+            transition: all 0.5s ease;
+            padding: 1rem;
+        }
+        .close-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            border: none;
+            font-size: 2rem;
+            cursor: pointer;
+            color: #4B5563;
+        }
+    </style>
 </head>
-<body>
+<body class="font-sans relative">
 <div th:replace="~{fragments/header :: header}"></div>
 
-<div class="p-4">
-    <div class="bg-white p-6 rounded-lg shadow-2xl">
-        <h2 class="text-2xl font-bold mb-4">Posts</h2>
-        <ul>
-            <li class="mb-2">Post 1</li>
-            <li class="mb-2">Post 2</li>
-            <li class="mb-2">Post 3</li>
-        </ul>
+<div id="postsContainer" class="container mx-auto px-4 py-10 relative">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div th:each="post : ${posts}"
+             class="post-card bg-white rounded-xl shadow-lg p-6 border-l-8 border-blue-300 hover:shadow-2xl transition duration-300 cursor-pointer relative z-10">
+            <p class="hidden" id="post-id" th:text="${post.id}"></p>
+            <h2 class="text-2xl font-semibold text-blue-800 mb-3" th:text="${post.title}">Title</h2>
+            <h4 class="text-gray-700 mt-4 mb-6 text-lg hidden" id="post-content" th:text="${post.content}">content</h4>
+            <div class="flex justify-between items-center text-sm text-gray-600 border-t pt-3">
+                <span th:text="${#temporals.format(post.createDate, 'dd-MM-yyyy HH:mm')}">Date</span>
+                <span th:text="'Author: ' + (${post.author} ?: 'Anonymous')">Author</span>
+                <span th:text="${post.commentCount} + ' comments'">0 comments</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex justify-center mt-10">
+        <nav class="flex items-center space-x-2">
+            <a th:if="${page > 0}" th:href="@{/posts(page=${page - 1})}"
+               class="px-4 py-2 bg-blue-200 text-blue-800 rounded-md hover:bg-blue-300 transition duration-200">
+                Previous
+            </a>
+            <span class="px-4 py-2 bg-white border rounded-md text-gray-700">
+          <span th:text="${page + 1}">1</span> of <span th:text="${totalPages}">1</span>
+        </span>
+            <a th:if="${page + 1 < totalPages}" th:href="@{/posts(page=${page + 1})}"
+               class="px-4 py-2 bg-purple-200 text-purple-800 rounded-md hover:bg-purple-300 transition duration-200">
+                Next
+            </a>
+        </nav>
     </div>
 </div>
+
+<div id="expandedOverlay" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const postsContainer = document.getElementById("postsContainer");
+        const expandedOverlay = document.getElementById("expandedOverlay");
+        const postCards = document.querySelectorAll(".post-card");
+
+        postCards.forEach(card => {
+            card.addEventListener("click", function () {
+                const rect = card.getBoundingClientRect();
+                const id = card.querySelector("#post-id").textContent;
+
+                const clone = card.cloneNode(true);
+                clone.classList.remove("cursor-pointer", "hover:shadow-2xl");
+                clone.classList.add("expanded-animation");
+
+                clone.style.top = rect.top + "px";
+                clone.style.left = rect.left + "px";
+                clone.style.width = rect.width + "px";
+                clone.style.height = rect.height + "px";
+
+                const closeBtn = document.createElement("button");
+                closeBtn.className = "close-btn";
+                closeBtn.innerHTML = "&times;";
+                closeBtn.addEventListener("click", function (e) {
+                    e.stopPropagation();
+                    closeExpanded(clone);
+                });
+                clone.appendChild(closeBtn);
+
+                const clonedContent = clone.querySelector("#post-content");
+                if (clonedContent) {
+                    clonedContent.classList.remove("hidden");
+                }
+
+                expandedOverlay.innerHTML = "";
+                expandedOverlay.appendChild(clone);
+                expandedOverlay.classList.remove("hidden");
+                postsContainer.classList.add("blurred");
+
+                requestAnimationFrame(() => {
+                    clone.style.top = "10%";
+                    clone.style.left = "10%";
+                    clone.style.width = "80%";
+                    clone.style.height = "80%";
+                });
+
+                setTimeout(() => {
+                    fetch(`/posts/` + id)
+                        .then(response => response.text())
+                        .then(html => {
+                            const detailsContainer = document.createElement("div");
+                            detailsContainer.innerHTML = html;
+                            const authorElem = clone.querySelector(".text-sm.text-gray-600");
+
+                            if (authorElem) {
+                                authorElem.insertAdjacentElement("beforebegin", detailsContainer);
+                            }
+                        })
+                        .catch(err => console.error("Error loading post content:", err));
+                }, 500);
+            });
+        });
+
+        function closeExpanded(clone) {
+            expandedOverlay.classList.add("hidden");
+            postsContainer.classList.remove("blurred");
+
+            const originalPost = document.querySelector(`.post-card #post-id[textContent="${clone.querySelector("#post-id").textContent}"]`);
+            if (originalPost) {
+                const originalContent = originalPost.closest(".post-card").querySelector("#post-content");
+                if (originalContent) {
+                    originalContent.classList.add("hidden");
+                }
+            }
+        }
+
+        expandedOverlay.addEventListener("click", function (e) {
+            if (e.target === expandedOverlay) {
+                closeExpanded();
+            }
+        });
+    });
+</script>
+
+<style>
+    .comment-box {
+        background-color: #f9fafb;
+        border-radius: 10px;
+        padding: 12px;
+        margin-top: 10px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .comment-author {
+        font-weight: bold;
+        color: #374151;
+    }
+    .comment-date {
+        font-size: 0.875rem;
+        color: #6b7280;
+    }
+</style>
 </body>
 </html>

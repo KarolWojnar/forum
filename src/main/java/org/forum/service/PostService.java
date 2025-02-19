@@ -3,13 +3,20 @@ package org.forum.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.forum.exception.UserException;
+import org.forum.model.dto.CommentDto;
 import org.forum.model.dto.PostDto;
+import org.forum.model.dto.PostInfoDto;
+import org.forum.model.entity.Comment;
 import org.forum.model.entity.User;
+import org.forum.repository.CommentRepository;
 import org.forum.repository.PostRepository;
-import org.forum.repository.UserRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.util.List;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -18,6 +25,7 @@ public class PostService {
 
     private final PostRepository postRepository;
     private final UserService userService;
+    private final CommentRepository commentRepository;
 
     public String createPost(PostDto post, RedirectAttributes redAttrs) {
         if (!validPost(post, redAttrs)) {
@@ -48,5 +56,15 @@ public class PostService {
         } else {
             return true;
         }
+    }
+
+    public Page<PostInfoDto> getPosts(int page) {
+        Pageable pageable = Pageable.ofSize(10).withPage(page);
+        return postRepository.findPostsInfo(pageable);
+    }
+
+    public List<CommentDto> getPostComments(Long id) {
+        List<Comment> comments = commentRepository.findAllByPost_IdAndParentCommentNullOrderByCreateDate(id);
+        return comments.stream().map(CommentDto::fromEntity).toList();
     }
 }
