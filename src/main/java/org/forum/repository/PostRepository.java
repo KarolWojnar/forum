@@ -16,8 +16,9 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     FROM Post p
     LEFT JOIN p.author u
     LEFT JOIN Comment c ON c.post.id = p.id
+    WHERE p.title LIKE %?1%
     GROUP BY p.id
     ORDER BY COUNT(c.id) DESC
    \s""")
-    Page<PostInfoDto> findPostsInfo(Pageable pageable);
+    Page<PostInfoDto> findPostsInfo(Pageable pageable, String keyWord);
 }

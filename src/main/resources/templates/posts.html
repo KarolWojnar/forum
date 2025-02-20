@@ -1,9 +1,13 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="pl">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.w3.org/1999/xhtml"
+      lang="pl">
 <head>
     <meta charset="UTF-8">
     <title>Posts</title>
     <link rel="stylesheet" th:href="@{/static/css/output.css}">
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
     <style>
         .blurred {
             filter: blur(4px);
@@ -14,134 +18,306 @@
             z-index: 60;
             background-color: white;
             border-radius: 0.75rem;
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1),
+            0 4px 6px -2px rgba(0,0,0,0.05);
             overflow: auto;
             transition: all 0.5s ease;
             padding: 1rem;
         }
-        .close-btn {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            border: none;
-            font-size: 2rem;
-            cursor: pointer;
-            color: #4B5563;
+        #searchInput {
+            width: 100%;
+            max-width: 200px;
+            margin-left: auto;
+            display: block;
+        }
+        .comment-box {
+            background-color: #f9fafb;
+            border-radius: 10px;
+            padding: 12px;
+            margin-top: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .comment-author {
+            font-weight: bold;
+            color: #374151;
+        }
+        .comment-date {
+            font-size: 0.875rem;
+            color: #6b7280;
         }
     </style>
 </head>
-<body class="font-sans relative">
+<body class="relative">
 <div th:replace="~{fragments/header :: header}"></div>
-
-<div id="postsContainer" class="container mx-auto px-4 py-10 relative">
+<div class="container mx-auto px-4">
+    <div class="mt-2 flex justify-end">
+        <input id="searchInput" type="text" placeholder="Search by title..."
+               class="w-full md:w-auto px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-300"
+               th:value="${keyWord}" />
+    </div>
+</div>
+<div id="postsContainer" th:fragment="postFragment" class="container mx-auto px-4 py-10 relative">
     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div th:each="post : ${posts}"
-             class="post-card bg-white rounded-xl shadow-lg p-6 border-l-8 border-blue-300 hover:shadow-2xl transition duration-300 cursor-pointer relative z-10">
-            <p class="hidden" id="post-id" th:text="${post.id}"></p>
-            <h2 class="text-2xl font-semibold text-blue-800 mb-3" th:text="${post.title}">Title</h2>
-            <h4 class="text-gray-700 mt-4 mb-6 text-lg hidden" id="post-content" th:text="${post.content}">content</h4>
+             class="post-card bg-white rounded-xl shadow-lg p-6 border-l-8 border-blue-300 hover:shadow-2xl transition duration-300 cursor-pointer relative z-10"
+             th:id="'post-card-' + ${post.id}">
+            <p class="hidden" th:id="'post-id-' + ${post.id}" th:text="${post.id}"></p>
+            <div class="flex justify-between items-center mb-3">
+                <h2 class="text-2xl font-semibold text-blue-800" th:text="${post.title}">Title</h2>
+                <div class="flex gap-4 hidden" th:id="'post-action-' + ${post.id}">
+                    <button th:if="${#authorization.expression('hasRole(''ADMIN'')') or post.author == #authentication.name}"
+                            th:data-post-id="${post.id}"
+                            class="archive-post bg-yellow-400 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg">
+                        Archive Post
+                    </button>
+                </div>
+            </div>
+            <h4 class="text-gray-700 mt-4 mb-6 text-lg hidden" th:id="'post-content-' + ${post.id}" th:text="${post.content}">
+                content
+            </h4>
             <div class="flex justify-between items-center text-sm text-gray-600 border-t pt-3">
                 <span th:text="${#temporals.format(post.createDate, 'dd-MM-yyyy HH:mm')}">Date</span>
                 <span th:text="'Author: ' + (${post.author} ?: 'Anonymous')">Author</span>
                 <span th:text="${post.commentCount} + ' comments'">0 comments</span>
             </div>
+            <div th:id="'new-comment-' + ${post.id}" class="hidden">
+                <div th:id="'commentsContainer-' + ${post.id}" class="py-2 auto-dismiss"></div>
+                <div class="mt-6 p-4 bg-white shadow-lg rounded-lg">
+                    <h4 class="text-lg font-semibold text-gray-800 mb-2">Add a comment</h4>
+                    <textarea class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+                              th:id="'commentContent-' + ${post.id}"
+                              placeholder="Write your comment..." rows="3" maxlength="500"></textarea>
+                    <input type="hidden" th:id="'postId-' + ${post.id}" th:value="${post.id}">
+                    <div class="flex justify-end mt-3">
+                        <button sec:authorize="isAuthenticated()"
+                                th:id="'submitComment-' + ${post.id}"
+                                class="bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
+                            Submit Comment
+                        </button>
+                        <a th:href="@{login}" sec:authorize="!isAuthenticated()"
+                           class="bg-gray-500 hover:bg-gray-700 text-white px-4 py-2 rounded-lg ml-2">
+                            Login to comment
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <h2 th:if="${error}" th:text="${error}">Error</h2>
         </div>
     </div>
-
-    <div class="flex justify-center mt-10">
+    <div class="flex justify-center mt-10" th:if="${totalPages > 0}">
         <nav class="flex items-center space-x-2">
-            <a th:if="${page > 0}" th:href="@{/posts(page=${page - 1})}"
-               class="px-4 py-2 bg-blue-200 text-blue-800 rounded-md hover:bg-blue-300 transition duration-200">
+            <button th:if="${page > 0}"
+                    th:data-page="${page - 1}"
+                    th:data-keyword="${keyWord}"
+                    class="page-link px-4 py-2 bg-blue-200 text-blue-800 rounded-md hover:bg-blue-300 transition duration-200">
                 Previous
-            </a>
+            </button>
             <span class="px-4 py-2 bg-white border rounded-md text-gray-700">
-          <span th:text="${page + 1}">1</span> of <span th:text="${totalPages}">1</span>
-        </span>
-            <a th:if="${page + 1 < totalPages}" th:href="@{/posts(page=${page + 1})}"
-               class="px-4 py-2 bg-purple-200 text-purple-800 rounded-md hover:bg-purple-300 transition duration-200">
+                    <span th:text="${page + 1}">1</span> of <span th:text="${totalPages}">1</span>
+                </span>
+            <button th:if="${page + 1 < totalPages}"
+                    th:data-page="${page + 1}"
+                    th:data-keyword="${keyWord}"
+                    class="page-link px-4 py-2 bg-purple-200 text-purple-800 rounded-md hover:bg-purple-300 transition duration-200">
                 Next
-            </a>
+            </button>
         </nav>
     </div>
+    <h2 th:if="${totalPages == 0}" class="text-center text-2xl font-semibold text-violet-700 mb-3">
+        Nothing to see
+    </h2>
 </div>
-
-<div id="expandedOverlay" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
-</div>
-
+<div id="expandedOverlay" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60"></div>
+</body>
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         const postsContainer = document.getElementById("postsContainer");
         const expandedOverlay = document.getElementById("expandedOverlay");
-        const postCards = document.querySelectorAll(".post-card");
 
-        postCards.forEach(card => {
-            card.addEventListener("click", function () {
-                const rect = card.getBoundingClientRect();
-                const id = card.querySelector("#post-id").textContent;
-
-                const clone = card.cloneNode(true);
-                clone.classList.remove("cursor-pointer", "hover:shadow-2xl");
-                clone.classList.add("expanded-animation");
-
-                clone.style.top = rect.top + "px";
-                clone.style.left = rect.left + "px";
-                clone.style.width = rect.width + "px";
-                clone.style.height = rect.height + "px";
-
-                const closeBtn = document.createElement("button");
-                closeBtn.className = "close-btn";
-                closeBtn.innerHTML = "&times;";
-                closeBtn.addEventListener("click", function (e) {
-                    e.stopPropagation();
-                    closeExpanded(clone);
+        function attachPaginationListeners() {
+            document.querySelectorAll(".page-link").forEach(button => {
+                button.addEventListener("click", function () {
+                    const page = this.getAttribute("data-page");
+                    const keyword = this.getAttribute("data-keyword") || "";
+                    fetchPosts(page, keyword);
                 });
-                clone.appendChild(closeBtn);
+            });
+        }
 
-                const clonedContent = clone.querySelector("#post-content");
-                if (clonedContent) {
-                    clonedContent.classList.remove("hidden");
-                }
+        function refreshComments(postId) {
+            fetch(`/posts/${postId}`)
+                .then(response => response.text())
+                .then(html => {
+                    const detailsContainer = document.createElement("div");
+                    detailsContainer.innerHTML = html;
+                    const expandedPost = expandedOverlay.querySelector(`[id^='post-card-${postId}']`);
+                    if (expandedPost) {
+                        const commentsContainer = expandedPost.querySelector(`[id^='commentsContainer-${postId}']`);
+                        if (commentsContainer) {
+                            const newComments = detailsContainer.querySelector(".mt-6");
+                            if (newComments) {
+                                commentsContainer.innerHTML = newComments.innerHTML;
+                            }
+                        }
 
-                expandedOverlay.innerHTML = "";
-                expandedOverlay.appendChild(clone);
-                expandedOverlay.classList.remove("hidden");
-                postsContainer.classList.add("blurred");
+                        const commentCountElem = expandedPost.querySelector(".text-sm.text-gray-600 span:last-child");
+                        if (commentCountElem) {
+                            const newCommentCount = detailsContainer.querySelector(".text-sm.text-gray-600 span:last-child")?.textContent;
+                            if (newCommentCount) {
+                                commentCountElem.textContent = newCommentCount;
+                            }
+                        }
+                    }
 
-                requestAnimationFrame(() => {
-                    clone.style.top = "10%";
-                    clone.style.left = "10%";
-                    clone.style.width = "80%";
-                    clone.style.height = "80%";
+                    const postCard = document.getElementById(`post-card-${postId}`);
+                    if (postCard) {
+                        const commentCountElemMain = postCard.querySelector(".text-sm.text-gray-600 span:last-child");
+                        if (commentCountElemMain) {
+                            const newCommentCount = detailsContainer.querySelector(".text-sm.text-gray-600 span:last-child")?.textContent;
+                            if (newCommentCount) {
+                                commentCountElemMain.textContent = newCommentCount;
+                            }
+                        }
+                    }
+                })
+                .catch(err => console.error("Error loading comments:", err));
+        }
+
+        function attachCommentListeners() {
+            document.querySelectorAll("[id^='submitComment-']").forEach(button => {
+                button.addEventListener("click", function () {
+                    const postCard = this.closest(".post-card");
+                    const postIdElem = postCard.querySelector("[id^='post-id-']");
+                    const commentContentElem = postCard.querySelector("[id^='commentContent-']");
+                    if (!postIdElem || !commentContentElem) return;
+                    const id = postIdElem.textContent;
+                    const commentContent = commentContentElem.value.trim();
+                    if (commentContent.length === 0) {
+                        alert("Comment cannot be empty.");
+                        return;
+                    }
+                    if (commentContent.length > 500) {
+                        alert("Comment cannot be longer than 500 characters.");
+                        return;
+                    }
+                    addComment(id, commentContent);
                 });
+            });
+        }
 
-                setTimeout(() => {
-                    fetch(`/posts/` + id)
+        function addComment(postId, commentContent) {
+            const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+            const params = new URLSearchParams();
+            params.append("content", commentContent);
+
+            fetch(`/posts/${postId}/comment`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    "X-Requested-With": "XMLHttpRequest",
+                    [csrfHeader]: csrfToken
+                },
+                body: params.toString()
+            })
+                .then(response => {
+                    if (response.ok) {
+                        refreshComments(postId);
+                        const textarea = expandedOverlay.querySelector(`#commentContent-${postId}`);
+                        if (textarea) {
+                            textarea.value = "";
+                        }
+                    } else {
+                        throw new Error(response.status.toString());
+                    }
+                })
+                .catch(error => {
+                    alert("Error adding comment: " + error.message);
+                });
+        }
+
+        function fetchPosts(page, keyword) {
+            fetch(`/posts?page=${page}&key-word=${encodeURIComponent(keyword)}`, {
+                headers: { "X-Requested-With": "XMLHttpRequest" }
+            })
+                .then(response => response.text())
+                .then(html => {
+                    const tempDiv = document.createElement("div");
+                    tempDiv.innerHTML = html;
+                    const fragment = tempDiv.querySelector("#postsContainer");
+                    if (fragment) {
+                        document.getElementById("postsContainer").innerHTML = fragment.innerHTML;
+                        attachPaginationListeners();
+                        attachPostListeners();
+                    }
+                })
+                .catch(err => console.error("Error fetching posts:", err));
+        }
+
+        function loadComments(postCards) {
+            postCards.forEach(card => {
+                card.addEventListener("click", function () {
+                    const rect = card.getBoundingClientRect();
+                    const id = card.querySelector("[id^='post-id-']").textContent;
+                    const clone = card.cloneNode(true);
+                    clone.classList.remove("cursor-pointer", "hover:shadow-2xl");
+                    clone.classList.add("expanded-animation");
+                    clone.style.top = rect.top + "px";
+                    clone.style.left = rect.left + "px";
+                    clone.style.width = rect.width + "px";
+                    clone.style.height = rect.height + "px";
+                    const contentElem = clone.querySelector("[id^='post-content-']");
+                    const actionElem = clone.querySelector("[id^='post-action-']");
+                    const commentElem = clone.querySelector("[id^='new-comment-']");
+                    if (contentElem) {
+                        contentElem.classList.remove("hidden");
+                    }
+                    if (actionElem) {
+                        actionElem.classList.remove("hidden");
+                    }
+                    if (commentElem) {
+                        commentElem.classList.remove("hidden");
+                    }
+                    expandedOverlay.innerHTML = "";
+                    expandedOverlay.appendChild(clone);
+                    expandedOverlay.classList.remove("hidden");
+                    postsContainer.classList.add("blurred");
+                    requestAnimationFrame(() => {
+                        clone.style.top = "10%";
+                        clone.style.left = "10%";
+                        clone.style.width = "80%";
+                        clone.style.height = "80%";
+                    });
+
+                    fetch(`/posts/${id}`)
                         .then(response => response.text())
                         .then(html => {
                             const detailsContainer = document.createElement("div");
                             detailsContainer.innerHTML = html;
-                            const authorElem = clone.querySelector(".text-sm.text-gray-600");
-
-                            if (authorElem) {
-                                authorElem.insertAdjacentElement("beforebegin", detailsContainer);
+                            const commentsContainer = clone.querySelector(`[id^='commentsContainer-${id}']`);
+                            if (commentsContainer) {
+                                const newComments = detailsContainer.querySelector(".mt-6");
+                                if (newComments) {
+                                    commentsContainer.innerHTML = newComments.innerHTML;
+                                }
                             }
+                            attachCommentListeners();
                         })
-                        .catch(err => console.error("Error loading post content:", err));
-                }, 500);
+                        .catch(err => console.error("Error loading post details:", err));
+                });
             });
-        });
+        }
 
-        function closeExpanded(clone) {
+        function attachPostListeners() {
+            const postCards = document.querySelectorAll(".post-card");
+            loadComments(postCards);
+
+        }
+
+        function closeExpanded() {
             expandedOverlay.classList.add("hidden");
             postsContainer.classList.remove("blurred");
-
-            const originalPost = document.querySelector(`.post-card #post-id[textContent="${clone.querySelector("#post-id").textContent}"]`);
-            if (originalPost) {
-                const originalContent = originalPost.closest(".post-card").querySelector("#post-content");
-                if (originalContent) {
-                    originalContent.classList.add("hidden");
-                }
-            }
+            expandedOverlay.innerHTML = "";
         }
 
         expandedOverlay.addEventListener("click", function (e) {
@@ -149,25 +325,54 @@
                 closeExpanded();
             }
         });
+
+        const searchInput = document.getElementById("searchInput");
+        searchInput.addEventListener("input", function (event) {
+            const keyword = event.target.value.trim();
+            if (keyword.length >= 2 || keyword.length === 0) {
+                fetchPosts(0, keyword);
+            }
+        });
+
+        attachPaginationListeners();
+        attachPostListeners();
+
+    });
+
+    document.addEventListener("click", function (event) {
+        console.log("asd")
+        if (event.target.classList.contains("delete-comment")) {
+            const button = event.target;
+            const commentId = button.getAttribute("data-comment-id");
+
+            if (!commentId) {
+                console.error("Comment ID is missing.");
+                return;
+            }
+
+            const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+
+            if (confirm("Are you sure you want to delete this comment?")) {
+                fetch(`/comments/${commentId}`, {
+                    method: "DELETE",
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded",
+                        "X-Requested-With": "XMLHttpRequest",
+                        [csrfHeader]: csrfToken
+                    }
+                })
+                    .then(response => {
+                        if (response.ok) {
+                            console.log(response.url)
+                            button.closest("li").remove();
+                        } else {
+                            alert("Failed to delete comment.");
+                        }
+                    })
+                    .catch(err => console.error("Error deleting comment:", err));
+            }
+        }
     });
 </script>
-
-<style>
-    .comment-box {
-        background-color: #f9fafb;
-        border-radius: 10px;
-        padding: 12px;
-        margin-top: 10px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-    .comment-author {
-        font-weight: bold;
-        color: #374151;
-    }
-    .comment-date {
-        font-size: 0.875rem;
-        color: #6b7280;
-    }
-</style>
-</body>
 </html>

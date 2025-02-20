@@ -15,7 +15,7 @@ public record CommentDto (
         return new CommentDto(
                 comment.getId(),
                 comment.getContent(),
-                comment.getUser().getUsername(),
+                comment.getUser() == null ? "Anonymous" : comment.getUser().getUsername(),
                 comment.getCreateDate(),
                 !comment.getReplies().isEmpty()
         );
