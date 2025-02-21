@@ -32,7 +32,6 @@ public class CommentService {
     private final UserService userService;
 
     public String addComment(Long id, NewCommentDto comment, RedirectAttributes redirect) {
-        log.info("1");
         Optional<Post> post = postRepository.findById(id);
         if (post.isEmpty()) {
             return "redirect:/posts";

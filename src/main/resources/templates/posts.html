@@ -32,6 +32,13 @@
             margin-left: auto;
             display: block;
         }
+        .comment-form {
+            border-left-width: 8px;
+            background-color: #f9fafb;
+            border-radius: 10px;
+            padding: 12px;
+            border-color: rgba(98, 110, 250, 0.8);
+        }
         .comment-box {
             border-left-width: 8px;
             background-color: #f9fafb;
@@ -87,7 +94,7 @@
             <div th:id="'new-comment-' + ${post.id}" class="hidden">
                 <div th:replace="~{fragments/post :: list-comment}"></div>
                 <div th:id="'commentsContainer-' + ${post.id}" class="py-2 auto-dismiss"></div>
-                <div class="mt-6 p-4 bg-white shadow-lg rounded-lg">
+                <div class="mt-6 p-4 bg-white shadow-lg rounded-lg comment-form">
                     <h4 class="text-lg font-semibold text-gray-800 mb-2">Add a comment</h4>
                     <textarea class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
                               th:id="'commentContent-' + ${post.id}"
@@ -149,45 +156,6 @@
             });
         }
 
-        function refreshComments(postId) {
-            fetch(`/posts/${postId}`)
-                .then(response => response.text())
-                .then(html => {
-                    const detailsContainer = document.createElement("div");
-                    detailsContainer.innerHTML = html;
-                    const expandedPost = expandedOverlay.querySelector(`[id^='post-card-${postId}']`);
-                    if (expandedPost) {
-                        const commentsContainer = expandedPost.querySelector(`[id^='commentsContainer-${postId}']`);
-                        if (commentsContainer) {
-                            const newComments = detailsContainer.querySelector(".mt-6");
-                            if (newComments) {
-                                commentsContainer.innerHTML = newComments.innerHTML;
-                            }
-                        }
-
-                        const commentCountElem = expandedPost.querySelector(".text-sm.text-gray-600 span:last-child");
-                        if (commentCountElem) {
-                            const newCommentCount = detailsContainer.querySelector(".text-sm.text-gray-600 span:last-child")?.textContent;
-                            if (newCommentCount) {
-                                commentCountElem.textContent = newCommentCount;
-                            }
-                        }
-                    }
-
-                    const postCard = document.getElementById(`post-card-${postId}`);
-                    if (postCard) {
-                        const commentCountElemMain = postCard.querySelector(".text-sm.text-gray-600 span:last-child");
-                        if (commentCountElemMain) {
-                            const newCommentCount = detailsContainer.querySelector(".text-sm.text-gray-600 span:last-child")?.textContent;
-                            if (newCommentCount) {
-                                commentCountElemMain.textContent = newCommentCount;
-                            }
-                        }
-                    }
-                })
-                .catch(err => console.error("Error loading comments:", err));
-        }
-
         function attachCommentListeners() {
             document.querySelectorAll("[id^='submitComment-']").forEach(button => {
                 button.addEventListener("click", function () {
@@ -205,40 +173,9 @@
                         alert("Comment cannot be longer than 500 characters.");
                         return;
                     }
-                    addComment(id, commentContent);
+                    addComment(id, commentContent, null);
                 });
             });
-        }
-
-        function addComment(postId, commentContent) {
-            const csrfToken = document.querySelector('meta[name="_csrf"]').content;
-            const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
-            const params = new URLSearchParams();
-            params.append("content", commentContent);
-
-            fetch(`/posts/${postId}/comment`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/x-www-form-urlencoded",
-                    "X-Requested-With": "XMLHttpRequest",
-                    [csrfHeader]: csrfToken
-                },
-                body: params.toString()
-            })
-                .then(response => {
-                    if (response.ok) {
-                        refreshComments(postId);
-                        const textarea = expandedOverlay.querySelector(`#commentContent-${postId}`);
-                        if (textarea) {
-                            textarea.value = "";
-                        }
-                    } else {
-                        throw new Error(response.status.toString());
-                    }
-                })
-                .catch(error => {
-                    alert("Error adding comment: " + error.message);
-                });
         }
 
         function fetchPosts(page, keyword) {
@@ -402,6 +339,79 @@
         }
     });
 
+    function addComment(postId, commentContent, parentId) {
+        const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+        const params = new URLSearchParams();
+        params.append("content", commentContent);
+        if (parentId) {
+            params.append("parentId", parentId);
+        }
+
+        fetch(`/posts/${postId}/comment`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                "X-Requested-With": "XMLHttpRequest",
+                [csrfHeader]: csrfToken
+            },
+            body: params.toString()
+        })
+            .then(response => {
+                if (response.ok) {
+                    refreshComments(postId);
+                    const textarea = expandedOverlay.querySelector(`#commentContent-${postId}`);
+                    if (textarea) {
+                        textarea.value = "";
+                    }
+                } else {
+                    throw new Error(response.status.toString());
+                }
+            })
+            .catch(error => {
+                alert("Error adding comment: " + error.message);
+            });
+    }
+
+    function refreshComments(postId) {
+        fetch(`/posts/${postId}`)
+            .then(response => response.text())
+            .then(html => {
+                const detailsContainer = document.createElement("div");
+                detailsContainer.innerHTML = html;
+                const expandedPost = expandedOverlay.querySelector(`[id^='post-card-${postId}']`);
+                if (expandedPost) {
+                    const commentsContainer = expandedPost.querySelector(`[id^='commentsContainer-${postId}']`);
+                    if (commentsContainer) {
+                        const newComments = detailsContainer.querySelector(".mt-6");
+                        if (newComments) {
+                            commentsContainer.innerHTML = newComments.innerHTML;
+                        }
+                    }
+
+                    const commentCountElem = expandedPost.querySelector(".text-sm.text-gray-600 span:last-child");
+                    if (commentCountElem) {
+                        const newCommentCount = detailsContainer.querySelector(".text-sm.text-gray-600 span:last-child")?.textContent;
+                        if (newCommentCount) {
+                            commentCountElem.textContent = newCommentCount;
+                        }
+                    }
+                }
+
+                const postCard = document.getElementById(`post-card-${postId}`);
+                if (postCard) {
+                    const commentCountElemMain = postCard.querySelector(".text-sm.text-gray-600 span:last-child");
+                    if (commentCountElemMain) {
+                        const newCommentCount = detailsContainer.querySelector(".text-sm.text-gray-600 span:last-child")?.textContent;
+                        if (newCommentCount) {
+                            commentCountElemMain.textContent = newCommentCount;
+                        }
+                    }
+                }
+            })
+            .catch(err => console.error("Error loading comments:", err));
+    }
+
     document.addEventListener("click", function (event) {
         if (event.target.classList.contains("delete-comment")) {
             const button = event.target;
@@ -471,7 +481,6 @@
            if (!id) {
                return;
            }
-
            fetchReplies(id, btn);
        }
     });
@@ -497,6 +506,46 @@
             })
             .catch(err => console.error("Error loading replies:", err));
     }
+
+    document.addEventListener("click", function (event) {
+        if (event.target.classList.contains("reply-comment")) {
+            const replyButton = event.target;
+            const replyForm = replyButton.nextElementSibling;
+            if (replyForm.classList.contains("hidden")) {
+                replyForm.classList.remove("hidden");
+                replyButton.textContent = "Hide";
+            } else {
+                replyButton.textContent = "Reply";
+                replyForm.classList.add("hidden");
+            }
+        }
+    });
+
+    document.addEventListener("submit", function (event) {
+        if (event.target.classList.contains("reply-form")) {
+            event.preventDefault();
+
+            const form = event.target;
+            const textarea = form.querySelector("textarea");
+            const replyContent = textarea.value.trim();
+            const commentId = form.querySelector("input[name='comment-id']").value.trim();
+            const postId = form.closest(".post-card").querySelector("[id^='post-id-']").textContent;
+
+            if (replyContent.length === 0) {
+                alert("Reply cannot be empty.");
+                return;
+            }
+
+            if (replyContent.length > 500) {
+                alert("Reply cannot be longer than 500 characters.");
+                return;
+            }
+
+            addComment(postId, replyContent, commentId);
+
+            textarea.value = "";
+        }
+    });
 
 </script>
 </html>
