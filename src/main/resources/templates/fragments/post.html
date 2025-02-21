@@ -1,3 +1,4 @@
+<meta charset="UTF-8">
 <div th:fragment="details">
     <div th:if="${#lists.size(details) > 0}" class="mt-6 bg-gray-50 p-4 rounded-lg shadow-md">
         <h4 class="text-xl font-semibold text-gray-800 mb-4">Comments</h4>
@@ -8,7 +9,7 @@
                         <p class="text-gray-900 flex-1" th:text="${comment.content}">Comment content</p>
                         <button th:if="${#authorization.expression('hasRole(''ADMIN'')') or comment.author == #authentication.name}"
                                 th:attr="data-comment-id=${comment.id}"
-                                class="delete-comment text-red-400 hover:text-red-700 font-semibold text-xs ml-4">
+                                class="delete-comment text-red-500 hover:text-red-700 font-semibold ml-4">
                             Delete
                         </button>
                     </div>
@@ -31,7 +32,8 @@
                         Reply
                     </button>
                     <form th:if="${#authorization.expression('isAuthenticated()')}"
-                          class="reply-form hidden mt-4 p-4 bg-gray-100 rounded-lg">
+                          class="reply-form hidden mt-4 p-4 bg-gray-100 rounded-lg"
+                    accept-charset="UTF-8">
                         <div class="flex flex-col space-y-3">
                             <textarea class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
                                       placeholder="Write your reply..." rows="3" maxlength="500"></textarea>
