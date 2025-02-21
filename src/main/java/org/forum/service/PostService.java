@@ -57,4 +57,20 @@ public class PostService {
         Pageable pageable = Pageable.ofSize(10).withPage(page);
         return postRepository.findPostsInfo(pageable, keyWord);
     }
+
+    public void archivePost(Long id, RedirectAttributes redirect) {
+        try {
+            User user = userService.findAuthenticatedUser(SecurityContextHolder.getContext().getAuthentication(), redirect);
+            if (user.getRole().equals("ADMIN")) {
+                postRepository.archivePost(id);
+            } else {
+                int updatedRecords = postRepository.archivePostByIdAndUser(user, id);
+                if (updatedRecords == 0) {
+                    redirect.addFlashAttribute("error", "You are not the author of this post.");
+                }
+            }
+        } catch (UserException e) {
+            throw new UserException("User not found or unauthorized.");
+        }
+    }
 }

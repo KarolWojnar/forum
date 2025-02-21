@@ -16,10 +16,9 @@
     <context:annotation-config />
     <mvc:annotation-driven />
     <context:property-placeholder location="classpath:application.properties" />
-    <context:component-scan base-package="org.forum, org.forum.config" />
+    <context:component-scan base-package="org.forum" />
     <jpa:repositories base-package="org.forum.repository" />
     <mvc:resources mapping="/static/**" location="/static/" />
-
 
     <bean id="templateResolver" class="org.thymeleaf.spring6.templateresolver.SpringResourceTemplateResolver">
         <property name="prefix" value="classpath:/templates/"/>
@@ -81,7 +80,6 @@
     <bean class="org.springframework.orm.jpa.JpaTransactionManager" id="transactionManager">
         <property name="entityManagerFactory" ref="entityManagerFactory" />
     </bean>
-    <bean id="securityConfiguration" class="org.forum.config.SecurityConfig" />
 
     <bean id="mailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl">
         <property name="port" value="${spring.mail.port}" />

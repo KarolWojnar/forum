@@ -59,4 +59,10 @@ public class PostController {
     public String addComment(@PathVariable("id") Long postId, @ModelAttribute NewCommentDto comment, RedirectAttributes redirect) {
         return commentService.addComment(postId, comment, redirect);
     }
+
+    @PatchMapping("/{id}/archive")
+    public String archivePost(@PathVariable("id") Long id, RedirectAttributes redirect) {
+        postService.archivePost(id, redirect);
+        return "posts";
+    }
 }

@@ -15,6 +15,7 @@ import org.forum.repository.PostRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.ui.Model;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -82,6 +83,11 @@ public class CommentService {
     public void deleteComment(Long id, RedirectAttributes redirect) {
         try {
             User currentUser = userService.findAuthenticatedUser(SecurityContextHolder.getContext().getAuthentication(), redirect);
+            if (currentUser.getRole().equals("ADMIN")) {
+                commentRepository.deleteById(id);
+                return;
+            }
+
             Comment comment = commentRepository.findByIdAndUser(id, currentUser).orElse(null);
             if (comment == null) {
                 throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Comment not found or unauthorized.");
@@ -90,5 +96,14 @@ public class CommentService {
         } catch (UserException e) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Comment not found or unauthorized.");
         }
+    }
+
+    public String getReplies(Long id, Model redirect) {
+        List<Comment> comment = commentRepository.findAllByParentComment_Id(id);
+        if (comment.isEmpty()) {
+            return "redirect:/posts";
+        }
+        redirect.addAttribute("details", comment.stream().map(CommentDto::fromEntity).toList());
+        return "fragments/post :: list-comment";
     }
 }

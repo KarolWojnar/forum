@@ -8,6 +8,8 @@
     <link rel="stylesheet" th:href="@{/static/css/output.css}">
     <meta name="_csrf" th:content="${_csrf.token}" />
     <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         .blurred {
             filter: blur(4px);
@@ -31,9 +33,11 @@
             display: block;
         }
         .comment-box {
+            border-left-width: 8px;
             background-color: #f9fafb;
             border-radius: 10px;
             padding: 12px;
+            border-color: rgba(201, 145, 248, 0.83);
             margin-top: 10px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
@@ -81,6 +85,7 @@
                 <span th:text="${post.commentCount} + ' comments'">0 comments</span>
             </div>
             <div th:id="'new-comment-' + ${post.id}" class="hidden">
+                <div th:replace="~{fragments/post :: list-comment}"></div>
                 <div th:id="'commentsContainer-' + ${post.id}" class="py-2 auto-dismiss"></div>
                 <div class="mt-6 p-4 bg-white shadow-lg rounded-lg">
                     <h4 class="text-lg font-semibold text-gray-800 mb-2">Add a comment</h4>
@@ -340,7 +345,64 @@
     });
 
     document.addEventListener("click", function (event) {
-        console.log("asd")
+        if (event.target.classList.contains("archive-post")) {
+            const btn = event.target;
+            const id = btn.getAttribute("data-post-id");
+            if (!id) {
+                return;
+            }
+            const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+
+            Swal.fire({
+                title: 'Archive post?',
+                text: 'This action will archive the post and it will not be visible on the main page.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, archive it!',
+                cancelButtonText: 'Cancel'
+            }).then((res) => {
+                if (res.isConfirmed) {
+                    fetch(`/posts/${id}/archive`, {
+                        method: 'PATCH',
+                        headers: {
+                            "Content-Type": "application/x-www-form-urlencoded",
+                            "X-Requested-With": "XMLHttpRequest",
+                            [csrfHeader]: csrfToken
+                        }
+                    }).then(res => {
+                        if (res.ok) {
+                            Swal.fire(
+                                'Archived!',
+                                'The post has been archived.',
+                                'success'
+                            ).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire(
+                                'Error!',
+                                'Failed to archive the post.',
+                                'error'
+                        );
+                    }
+                    })
+                    .catch(err => {
+                        console.error("Error archiving post:", err);
+                        Swal.fire(
+                            'Error!',
+                            'An error occurred while archiving the post.',
+                            'error'
+                        );
+                    });
+                }
+            })
+        }
+    });
+
+    document.addEventListener("click", function (event) {
         if (event.target.classList.contains("delete-comment")) {
             const button = event.target;
             const commentId = button.getAttribute("data-comment-id");
@@ -353,26 +415,88 @@
             const csrfToken = document.querySelector('meta[name="_csrf"]').content;
             const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
 
-            if (confirm("Are you sure you want to delete this comment?")) {
-                fetch(`/comments/${commentId}`, {
-                    method: "DELETE",
-                    headers: {
-                        "Content-Type": "application/x-www-form-urlencoded",
-                        "X-Requested-With": "XMLHttpRequest",
-                        [csrfHeader]: csrfToken
-                    }
-                })
-                    .then(response => {
-                        if (response.ok) {
-                            console.log(response.url)
-                            button.closest("li").remove();
-                        } else {
-                            alert("Failed to delete comment.");
+            Swal.fire({
+                title: 'Delete comment?',
+                text: "This action cannot be undone!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch(`/comments/${commentId}`, {
+                        method: "DELETE",
+                        headers: {
+                            "Content-Type": "application/x-www-form-urlencoded",
+                            "X-Requested-With": "XMLHttpRequest",
+                            [csrfHeader]: csrfToken
                         }
                     })
-                    .catch(err => console.error("Error deleting comment:", err));
-            }
+                        .then(response => {
+                            if (response.ok) {
+                                button.closest("li").remove();
+                                Swal.fire(
+                                    'Deleted!',
+                                    'Your comment has been deleted.',
+                                    'success'
+                                );
+                            } else {
+                                Swal.fire(
+                                    'Error!',
+                                    'Failed to delete the comment.',
+                                    'error'
+                                );
+                            }
+                        })
+                        .catch(err => {
+                            console.error("Error deleting comment:", err);
+                            Swal.fire(
+                                'Error!',
+                                'An error occurred while deleting the comment.',
+                                'error'
+                            );
+                        });
+                }
+            });
         }
     });
+
+    document.addEventListener("click", function (event) {
+       if (event.target.classList.contains("load-more")) {
+           const btn = event.target;
+           const id = btn.getAttribute("data-more-id");
+
+           if (!id) {
+               return;
+           }
+
+           fetchReplies(id, btn);
+       }
+    });
+
+    function fetchReplies(commentId, button) {
+        fetch(`/comments/${commentId}/replies`, {
+            headers: { "X-Requested-With": "XMLHttpRequest" }
+        })
+            .then(response => response.text())
+            .then(html => {
+                const repliesContainer = document.createElement("div");
+                repliesContainer.innerHTML = html;
+                const repliesList = repliesContainer.querySelector("ul");
+
+                if (repliesList) {
+                    const commentBox = button.closest("li");
+                    const repliesPlaceholder = commentBox.querySelector(".replies-list");
+                    if (repliesPlaceholder) {
+                        repliesPlaceholder.innerHTML = repliesList.innerHTML;
+                    }
+                    button.remove();
+                }
+            })
+            .catch(err => console.error("Error loading replies:", err));
+    }
+
 </script>
 </html>
