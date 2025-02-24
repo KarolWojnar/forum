@@ -3,6 +3,7 @@ package org.forum.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.forum.exception.UserException;
+import org.forum.model.ActivationType;
 import org.forum.model.dto.UserDto;
 import org.forum.model.entity.Activation;
 import org.forum.model.entity.User;
@@ -31,22 +32,54 @@ public class UserService {
     private final EmailService emailService;
     private final ActivationRepository activationRepository;
 
-    public String createUser(UserDto userDto, RedirectAttributes redirectAttributes) {
+    public String createUser(UserDto userDto, RedirectAttributes redirectAttributes, String token) {
         User user = userRepository.findByUsernameOrEmail(userDto.getUsername(), userDto.getEmail()).orElse(null);
         if (!ValidationUtil.validateUser(userDto, user, redirectAttributes)) {
+            redirectAttributes.addFlashAttribute("username", userDto.getUsername());
+            redirectAttributes.addFlashAttribute("email", userDto.getEmail());
+            if (token != null) {
+                return "redirect:/register?token=" + token;
+            }
             return "redirect:/register";
         }
-        saveUser(userDto, redirectAttributes);
+        try {
+            saveUser(userDto, checkToken(token), redirectAttributes);
+        } catch (UserException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            redirectAttributes.addFlashAttribute("username", userDto.getUsername());
+            redirectAttributes.addFlashAttribute("email", userDto.getEmail());
+            return "redirect:/register";
+        }
         return "redirect:/login";
     }
 
-    public void saveUser(UserDto userDto, RedirectAttributes redirectAttributes) {
+    private boolean checkToken(String token) {
+        if (token != null) {
+            Optional<Activation> activation = activationRepository.findByActivationCodeAndType(token, ActivationType.ADMIN_INVITE);
+            if (activation.isEmpty()) {
+                throw new UserException("Invalid activation link.");
+            }
+            if (activation.get().getExpiresAt().isBefore(LocalDateTime.now())) {
+                activationRepository.delete(activation.get());
+                throw new UserException("Activation link expired.");
+            }
+            activationRepository.delete(activation.get());
+            return true;
+        }
+        return false;
+    }
+
+    public void saveUser(UserDto userDto, boolean haveAdminToken, RedirectAttributes redirectAttributes) {
         userDto.setPassword(passwordEncoder.encode(userDto.getPassword()));
-        Activation active = new Activation();
-        active.setUser(userRepository.save(UserMapper.toEntity(userDto)));
+        Activation active = new Activation(ActivationType.REGISTRATION);
+        User user = UserMapper.toEntity(userDto);
+        if (haveAdminToken) {
+            user.setRole("ADMIN");
+        }
+        active.setUser(userRepository.save(user));
         String token = activationRepository.save(active).getActivationCode();
         emailService.sendEmail(userDto.getEmail(), token);
-        redirectAttributes.addFlashAttribute("success", "User created successfully.");
+        redirectAttributes.addFlashAttribute("success", "User created successfully. Active your account on email.");
         redirectAttributes.addFlashAttribute("username", userDto.getUsername());
     }
 
@@ -60,10 +93,15 @@ public class UserService {
     }
 
     public String activateUser(String uid, Model model) {
-        Optional<Activation> activation = activationRepository.findByActivationCode(uid);
+        Optional<Activation> activation = activationRepository.findByActivationCodeAndType(uid, ActivationType.REGISTRATION);
         if (activation.isEmpty()) {
             model.addAttribute("error", "Invalid activation link.");
         } else {
+            if (activation.get().getExpiresAt().isBefore(LocalDateTime.now())) {
+                activationRepository.delete(activation.get());
+                model.addAttribute("error", "Activation link has expired.");
+                return "login";
+            }
             User user = activation.get().getUser();
             user.setActivated(true);
             userRepository.save(user);

@@ -1,17 +1,168 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Admin</title>
+    <title>Admin Panel</title>
     <link rel="stylesheet" th:href="@{/static/css/output.css}">
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        .blurred {
+            filter: blur(4px);
+            transition: filter 0.3s ease;
+        }
+        .expanded-animation {
+            position: fixed;
+            z-index: 60;
+            background-color: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1),
+            0 4px 6px -2px rgba(0,0,0,0.05);
+            overflow: auto;
+            transition: all 0.5s ease;
+            padding: 1rem;
+        }
+        .comment-form {
+            border-left-width: 8px;
+            background-color: #f9fafb;
+            border-radius: 10px;
+            padding: 12px;
+            border-color: rgba(98, 110, 250, 0.8);
+        }
+        .comment-box {
+            border-left-width: 8px;
+            background-color: #f9fafb;
+            border-radius: 10px;
+            padding: 12px;
+            border-color: rgba(201, 145, 248, 0.83);
+            margin-top: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .comment-author {
+            font-weight: bold;
+            color: #374151;
+        }
+        .comment-date {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+    </style>
 </head>
-<body>
+<body class="relative">
 <div th:replace="~{fragments/header :: header}"></div>
 
-<div class="p-4">
-    <div class="bg-white p-6 rounded-lg shadow-2xl">
-        <h2 class="text-2xl font-bold mb-4">Welcome admin!</h2>
+<div class="max-w-md mx-auto py-2 auto-dismiss" th:if="${error} or ${success}">
+    <div th:if="${error}" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative shadow-2xl" role="alert">
+        <span class="block sm:inline" th:text="${error}"></span>
+    </div>
+    <div th:if="${success}" class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg relative shadow-2xl" role="alert">
+        <span class="block sm:inline" th:text="${success}"></span>
     </div>
 </div>
+
+<div class="container mx-auto px-4 py-10">
+    <div class="bg-white rounded-lg shadow-lg p-6 mb-8 md:w-1/2">
+        <h2 class="text-2xl font-semibold text-blue-800 mb-4">Invite New Admin</h2>
+        <form th:action="@{/admin/invite}" method="post" class="space-y-4">
+            <div class="flex items-center space-x-4">
+                <input type="email" name="email" class="px-4 py-2 w-3/4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter email address" required>
+                <button type="submit" class="px-6 py-2 bg-blue-500 text-white w-1/4 rounded-md hover:bg-blue-600 transition duration-200">Send Invite</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-lg p-6">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-semibold text-blue-800">User List</h2>
+            <input id="searchInput" type="text" placeholder="Search by username or email"
+                   class="px-4 py-2 pl-3 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 transition duration-200"
+                   th:value="${username}" />
+        </div>
+
+        <div id="userContainer" th:fragment="user-list">
+            <table class="w-full table-auto">
+                <thead>
+                <tr class="bg-gray-100">
+                    <th class="px-4 py-2 text-left">Username</th>
+                    <th class="px-4 py-2 text-left">Email</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="user : ${users}" class="border-b border-gray-200 hover:bg-gray-50">
+                    <td class="px-4 py-2" th:text="${user.username}"></td>
+                    <td class="px-4 py-2" th:text="${user.email}"></td>
+                </tr>
+                </tbody>
+            </table>
+            <div class="flex justify-center mt-6" th:if="${totalPages > 0}">
+                <nav class="flex items-center space-x-2">
+                    <button th:if="${currentPage > 0}"
+                            th:data-page="${currentPage - 1}"
+                            th:data-username="${username}"
+                            class="px-4 py-2 page-link bg-blue-200 text-blue-800 rounded-md hover:bg-blue-300 transition duration-200">
+                        Previous
+                    </button>
+                    <span class="px-4 py-2 bg-white border rounded-md text-gray-700">
+                        <span th:text="${currentPage + 1}">1</span> of <span th:text="${totalPages}">1</span>
+                    </span>
+                    <button th:if="${currentPage + 1 < totalPages}"
+                            th:data-page="${currentPage + 1}"
+                            th:data-username="${username}"
+                            class="px-4 py-2 page-link bg-purple-200 text-purple-800 rounded-md hover:bg-purple-300 transition duration-200">
+                        Next
+                    </button>
+                </nav>
+            </div>
+            <h2 th:if="${totalPages == 0}" class="text-center text-2xl font-semibold text-violet-700 mb-3">
+                No users found
+            </h2>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById("searchInput");
+
+        searchInput.addEventListener("input", function(event) {
+            const keyword = event.target.value.trim();
+            if (keyword.length > 2 || keyword.length === 0) {
+                fetchUsers(0, keyword);
+            }
+        });
+
+        attachPaginationListeners();
+    });
+
+    function attachPaginationListeners() {
+        document.querySelectorAll(".page-link").forEach(button => {
+            button.addEventListener("click", function () {
+                const page = this.getAttribute("data-page");
+                const keyword = document.getElementById("searchInput").value.trim();
+                fetchUsers(page, keyword);
+            });
+        });
+    }
+
+    function fetchUsers(page, keyword) {
+        fetch(`/admin?page=${page}&username=${encodeURIComponent(keyword)}`, {
+            headers: { "X-Requested-With": "XMLHttpRequest" }
+        })
+            .then(response => response.text())
+            .then(html => {
+                const tempDiv = document.createElement("div");
+                tempDiv.innerHTML = html;
+                const fragment = tempDiv.querySelector("[th\\:fragment='user-list'], #userContainer");
+                if (fragment) {
+                    document.getElementById("userContainer").innerHTML = fragment.innerHTML;
+                    attachPaginationListeners();
+                }
+            })
+            .catch(err => console.error("Error fetching users:", err));
+    }
+</script>
+
 </body>
 </html>
