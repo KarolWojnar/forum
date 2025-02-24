@@ -1,9 +1,11 @@
 package org.forum.model.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.forum.model.entity.Post;
 import org.forum.model.entity.User;
 
+@AllArgsConstructor
 @Data
 public class PostDto {
     private String title;
