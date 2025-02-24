@@ -2,6 +2,8 @@ package org.forum.model.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.LocalDateTime;
 
@@ -17,6 +19,7 @@ public class Post {
     @Column(nullable = false, length = 1000)
     private String content;
     @ManyToOne(fetch = FetchType.LAZY)
+    @OnDelete(action = OnDeleteAction.SET_NULL)
     @JoinColumn(name = "author_id")
     private User author;
     @Column(nullable = false)
@@ -28,6 +31,7 @@ public class Post {
     @PrePersist
     public void prePersist() {
         createDate = LocalDateTime.now();
+        updateDate = LocalDateTime.now();
     }
 
     @PreUpdate

@@ -1,29 +1,33 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>New Post</title>
-    <link rel="stylesheet" th:href="@{/static/css/output.css}">
-</head>
-<body>
+    <head>
+        <meta charset="UTF-8">
+        <title>New Post</title>
+        <link rel="stylesheet" th:href="@{/static/css/output.css}">
+    </head>
+    <body>
+        <div th:replace="~{fragments/header :: header}"></div>
 
-<div th:replace="~{fragments/header :: header}"></div>
-
-<div class="p-4">
-    <div class="bg-white p-6 rounded-lg shadow-2xl">
-        <h2 class="text-2xl font-bold mb-4">New Post</h2>
-        <form th:action="@{/posts/new}" method="post">
-            <div class="mb-4">
-                <label class="block text-gray-700">Title</label>
-                <input type="text" name="title" class="w-full p-2 border rounded">
+        <div class="p-4">
+            <div class="bg-white p-6 rounded-lg shadow-2xl">
+                <h2 class="text-2xl font-bold mb-4">New Post</h2>
+                <form th:action="@{/posts/new}" method="post">
+                    <div class="mb-4">
+                        <label class="block text-gray-700">Title</label>
+                        <input type="text" name="title" class="w-full p-2 border rounded" required maxlength="100">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-700">Content</label>
+                        <textarea name="content" class="w-full p-2 border rounded" required maxlength="1000"></textarea>
+                    </div>
+                    <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Submit</button>
+                </form>
             </div>
-            <div class="mb-4">
-                <label class="block text-gray-700">Content</label>
-                <textarea name="content" class="w-full p-2 border rounded"></textarea>
+        </div>
+        <div class="px-4">
+            <div th:if="${error}" class="bg-red-100 border border-red-400 text-red-700 py-3 px-4 rounded-lg relative shadow-2xl" role="alert">
+                <span class="block sm:inline" th:text="${error}"></span>
             </div>
-            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Submit</button>
-        </form>
-    </div>
-</div>
-</body>
+        </div>
+    </body>
 </html>

@@ -16,16 +16,16 @@
     <context:annotation-config />
     <mvc:annotation-driven />
     <context:property-placeholder location="classpath:application.properties" />
-    <context:component-scan base-package="org.forum, org.forum.config" />
+    <context:component-scan base-package="org.forum" />
     <jpa:repositories base-package="org.forum.repository" />
     <mvc:resources mapping="/static/**" location="/static/" />
-
 
     <bean id="templateResolver" class="org.thymeleaf.spring6.templateresolver.SpringResourceTemplateResolver">
         <property name="prefix" value="classpath:/templates/"/>
         <property name="suffix" value=".html"/>
         <property name="templateMode" value="HTML"/>
         <property name="cacheable" value="false"/>
+        <property name="characterEncoding" value="UTF-8" />
     </bean>
 
     <bean id="templateEngine" class="org.thymeleaf.spring6.SpringTemplateEngine">
@@ -40,6 +40,7 @@
     <bean class="org.thymeleaf.spring6.view.ThymeleafViewResolver">
         <property name="templateEngine" ref="templateEngine" />
         <property name="order" value="1" />
+        <property name="characterEncoding" value="UTF-8" />
     </bean>
 
     <bean class="org.apache.commons.dbcp2.BasicDataSource" id="dataSource" destroy-method="close">
@@ -74,12 +75,13 @@
         <constructor-arg ref="redisStandaloneConf" />
     </bean>
 
-    <bean class="org.springframework.session.data.redis.config.annotation.web.http.RedisHttpSessionConfiguration" />
+    <bean class="org.springframework.session.data.redis.config.annotation.web.http.RedisHttpSessionConfiguration">
+        <property name="maxInactiveIntervalInSeconds" value="172800" />
+    </bean>
 
     <bean class="org.springframework.orm.jpa.JpaTransactionManager" id="transactionManager">
         <property name="entityManagerFactory" ref="entityManagerFactory" />
     </bean>
-    <bean id="securityConfiguration" class="org.forum.config.SecurityConfig" />
 
     <bean id="mailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl">
         <property name="port" value="${spring.mail.port}" />

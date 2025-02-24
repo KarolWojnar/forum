@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 @RequiredArgsConstructor
@@ -23,8 +24,8 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public String register(@ModelAttribute UserDto userDto, Model model) {
-        return userService.createUser(userDto, model);
+    public String register(@ModelAttribute UserDto userDto, RedirectAttributes redirectAttributes) {
+        return userService.createUser(userDto, redirectAttributes);
     }
 
     @GetMapping("/activate/{uid}")
