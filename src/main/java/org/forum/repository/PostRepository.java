@@ -15,17 +15,16 @@ import org.springframework.transaction.annotation.Transactional;
 public interface PostRepository extends JpaRepository<Post, Long> {
 
     @Query("""
-    SELECT new org.forum.model.dto.PostInfoDto(p.id, p.title, p.content, p.createDate, u.username, COUNT(c.id))\s
+    SELECT new org.forum.model.dto.PostInfoDto(p.id, p.title, p.content, p.isActive, p.createDate as date, u.username, COUNT(c.id) AS comments)\s
     FROM Post p
     LEFT JOIN p.author u
     LEFT JOIN Comment c ON c.post.id = p.id
     WHERE p.title LIKE %?1%
-    AND p.isActive = true
-    GROUP BY p.id
-    ORDER BY COUNT(c.id) DESC
+    GROUP BY p.id, p.title, p.content, p.isActive, p.createDate, u.username
    \s""")
     Page<PostInfoDto> findPostsInfo(Pageable pageable, String keyWord);
 
+    @Transactional
     @Modifying
     @Query("""
     UPDATE Post p

@@ -24,9 +24,11 @@ public class PostController {
     @GetMapping()
     public String posts(@RequestParam(name = "page", defaultValue = "0") int page,
                         @RequestParam(name = "key-word", defaultValue = "") String keyWord,
+                        @RequestParam(name = "sort", defaultValue = "comments") String sort,
+                        @RequestParam(name = "direction", defaultValue = "desc") String direction,
                         Model model,
                         HttpServletRequest request) {
-        Page<PostInfoDto> posts = postService.getPosts(page, keyWord);
+        Page<PostInfoDto> posts = postService.getPosts(page, keyWord, sort, direction);
         model.addAttribute("posts", posts);
         model.addAttribute("page", page);
         model.addAttribute("keyWord", keyWord);

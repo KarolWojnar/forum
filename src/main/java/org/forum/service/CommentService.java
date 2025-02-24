@@ -36,7 +36,13 @@ public class CommentService {
         if (post.isEmpty()) {
             return "redirect:/posts";
         }
-        if (!validComment(comment, redirect)) {
+
+        if (!post.get().isActive()) {
+            redirect.addFlashAttribute("error", "Post is archived and cannot be commented on.");
+            return "redirect:/posts";
+        }
+
+        if (!ValidationUtil.validComment(comment, redirect)) {
             return "redirect:/posts/" + id;
         }
         return createCommentAndSave(post.get(), comment, redirect);
@@ -60,31 +66,17 @@ public class CommentService {
         return "redirect:/posts/" + post.getId();
     }
 
-    private boolean validComment(NewCommentDto comment, RedirectAttributes redirect) {
-        if (comment == null) {
-            redirect.addFlashAttribute("error", "Comment cannot be empty.");
-            return false;
-        } else if (comment.getContent().isEmpty()) {
-            redirect.addFlashAttribute("error", "Comment cannot be empty.");
-            return false;
-        } else if (comment.getContent().length() > 500) {
-            redirect.addFlashAttribute("error", "Comment cannot be longer than 500 characters.");
-            return false;
-        }
-        return true;
-    }
-
     public List<CommentDto> getPostComments(Long id) {
         List<Comment> comments = commentRepository.findAllByPost_IdAndParentCommentNullOrderByCreateDate(id);
         return comments.stream().map(CommentDto::fromEntity).toList();
     }
 
-    public void deleteComment(Long id, RedirectAttributes redirect) {
+    public String deleteComment(Long id, RedirectAttributes redirect) {
         try {
             User currentUser = userService.findAuthenticatedUser(SecurityContextHolder.getContext().getAuthentication(), redirect);
             if (currentUser.getRole().equals("ADMIN")) {
                 commentRepository.deleteById(id);
-                return;
+                return "posts";
             }
 
             Comment comment = commentRepository.findByIdAndUser(id, currentUser).orElse(null);
@@ -92,8 +84,9 @@ public class CommentService {
                 throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Comment not found or unauthorized.");
             }
             commentRepository.deleteById(id);
+            return "posts";
         } catch (UserException e) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Comment not found or unauthorized.");
+            return "redirect:/login";
         }
     }
 

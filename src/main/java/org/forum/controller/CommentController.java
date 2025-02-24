@@ -18,8 +18,7 @@ public class CommentController {
 
     @DeleteMapping("/{id}")
     public String deleteComment(@PathVariable("id") Long id, RedirectAttributes redirect) {
-        commentService.deleteComment(id, redirect);
-        return "posts";
+        return commentService.deleteComment(id, redirect);
     }
 
     @GetMapping("/{id}/replies")

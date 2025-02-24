@@ -32,7 +32,8 @@ public class UserService {
     private final ActivationRepository activationRepository;
 
     public String createUser(UserDto userDto, RedirectAttributes redirectAttributes) {
-        if (!validateUser(userDto, redirectAttributes)) {
+        User user = userRepository.findByUsernameOrEmail(userDto.getUsername(), userDto.getEmail()).orElse(null);
+        if (!ValidationUtil.validateUser(userDto, user, redirectAttributes)) {
             return "redirect:/register";
         }
         saveUser(userDto, redirectAttributes);
@@ -47,26 +48,6 @@ public class UserService {
         emailService.sendEmail(userDto.getEmail(), token);
         redirectAttributes.addFlashAttribute("success", "User created successfully.");
         redirectAttributes.addFlashAttribute("username", userDto.getUsername());
-    }
-
-    private boolean validateUser(UserDto userDto, RedirectAttributes redirectAttributes) {
-        if (userRepository.findByEmail(userDto.getEmail()).isPresent()) {
-            redirectAttributes.addFlashAttribute("error", "Email already exists.");
-            return false;
-        } else if (userRepository.findByUsername(userDto.getUsername()).isPresent()) {
-            redirectAttributes.addFlashAttribute("error", "Username already exists.");
-            return false;
-        } else if (!userDto.getPassword().equals(userDto.getConfirmPassword())) {
-            redirectAttributes.addFlashAttribute("error", "Passwords do not match.");
-            return false;
-        } else if (userDto.getPassword().length() < 8) {
-            redirectAttributes.addFlashAttribute("error", "Password must be at least 8 characters.");
-            return false;
-        } else if (userDto.getUsername().length() < 3) {
-            redirectAttributes.addFlashAttribute("error", "Username must be at least 3 characters.");
-            return false;
-        }
-        return true;
     }
 
     @Scheduled(cron = "0 0 * * * *")

@@ -8,6 +8,7 @@ public record CommentDto (
         Long id,
         String content,
         String author,
+        boolean isActivePost,
         LocalDateTime createDate,
         boolean hasReplies
 ){
@@ -16,6 +17,7 @@ public record CommentDto (
                 comment.getId(),
                 comment.getContent(),
                 comment.getUser() == null ? "Anonymous" : comment.getUser().getUsername(),
+                comment.getPost().isActive(),
                 comment.getCreateDate(),
                 !comment.getReplies().isEmpty()
         );
