@@ -66,6 +66,13 @@
         </property>
     </bean>
 
+    <bean id="liquibase" class="liquibase.integration.spring.SpringLiquibase">
+        <property name="dataSource" ref="dataSource" />
+        <property name="changeLog" value="${spring.liquibase.change-log}" />
+        <property name="contexts" value="dev" />
+        <property name="shouldRun" value="${spring.liquibase.enabled}" />
+    </bean>
+
     <bean id="redisStandaloneConf" class="org.springframework.data.redis.connection.RedisStandaloneConfiguration">
         <property name="hostName" value="${spring.redis.host}" />
         <property name="port" value="${spring.redis.port}" />

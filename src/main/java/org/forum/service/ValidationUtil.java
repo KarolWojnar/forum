@@ -1,5 +1,7 @@
 package org.forum.service;
 
+import jakarta.mail.internet.AddressException;
+import jakarta.mail.internet.InternetAddress;
 import org.forum.model.dto.NewCommentDto;
 import org.forum.model.dto.PostDto;
 import org.forum.model.dto.UserDto;
@@ -47,6 +49,13 @@ public class ValidationUtil {
             return false;
         } else if (userDto.getUsername().length() < 3) {
             redirectAttributes.addFlashAttribute("error", "Username must be at least 3 characters.");
+            return false;
+        }
+        try {
+            InternetAddress internetAddress = new InternetAddress(userDto.getEmail());
+            internetAddress.validate();
+        } catch (AddressException e) {
+            redirectAttributes.addFlashAttribute("error", "Please enter a valid email address.");
             return false;
         }
         return true;

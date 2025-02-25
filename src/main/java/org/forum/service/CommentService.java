@@ -38,7 +38,7 @@ public class CommentService {
         }
 
         if (!post.get().isActive()) {
-            redirect.addFlashAttribute("error", "Post is archived and cannot be commented on.");
+            redirect.addFlashAttribute("errorComment", "Post is archived and cannot be commented on.");
             return "redirect:/posts";
         }
 
@@ -74,16 +74,22 @@ public class CommentService {
     public String deleteComment(Long id, RedirectAttributes redirect) {
         try {
             User currentUser = userService.findAuthenticatedUser(SecurityContextHolder.getContext().getAuthentication(), redirect);
-            if (currentUser.getRole().equals("ADMIN")) {
-                commentRepository.deleteById(id);
-                return "posts";
-            }
+            Comment comment = commentRepository.findById(id).orElse(null);
 
-            Comment comment = commentRepository.findByIdAndUser(id, currentUser).orElse(null);
             if (comment == null) {
                 throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Comment not found or unauthorized.");
             }
-            commentRepository.deleteById(id);
+
+            if (currentUser.getRole().equals("ADMIN") || currentUser.equals(comment.getUser())) {
+                if (comment.getParentComment() != null) {
+                    Comment parent = comment.getParentComment();
+                    parent.getReplies().remove(comment);
+                    commentRepository.save(parent);
+                }
+                commentRepository.delete(comment);
+            } else {
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorized to delete this comment.");
+            }
             return "posts";
         } catch (UserException e) {
             return "redirect:/login";

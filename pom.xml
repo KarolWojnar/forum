@@ -22,9 +22,14 @@
             <version>6.1.14</version>
         </dependency>
         <dependency>
+            <groupId>org.liquibase</groupId>
+            <artifactId>liquibase-core</artifactId>
+            <version>4.31.1</version>
+        </dependency>
+        <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
-            <version>5.11.2</version> <!-- Upewnij się, że wersja jest aktualna -->
+            <version>5.11.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -42,7 +47,7 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-junit-jupiter</artifactId>
-            <version>5.14.2</version> <!-- Upewnij się, że wersja jest kompatybilna z JUnit 5 -->
+            <version>5.14.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>

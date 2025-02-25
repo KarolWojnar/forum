@@ -5,10 +5,7 @@ import org.forum.model.dto.UserDto;
 import org.forum.service.UserService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
@@ -20,12 +17,13 @@ public class AuthController {
     @GetMapping("/register")
     public String register(Model model) {
         model.addAttribute("userDto", new UserDto());
+        model.addAttribute("token", null);
         return "register";
     }
 
     @PostMapping("/register")
-    public String register(@ModelAttribute UserDto userDto, RedirectAttributes redirectAttributes) {
-        return userService.createUser(userDto, redirectAttributes);
+    public String register(@ModelAttribute UserDto userDto, @RequestParam("token") String token, RedirectAttributes redirectAttributes) {
+        return userService.createUser(userDto, redirectAttributes, token);
     }
 
     @GetMapping("/activate/{uid}")

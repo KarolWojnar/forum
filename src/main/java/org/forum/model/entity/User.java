@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 @Entity
 @Data
@@ -34,6 +35,22 @@ public class User {
         this.username = username;
         this.email = email;
         this.password = password;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof User user)) return false;
+        return activated == user.activated
+                && Objects.equals(username, user.username)
+                && Objects.equals(role, user.role)
+                && Objects.equals(email, user.email)
+                && Objects.equals(createDate, user.createDate);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(username, role, email, activated, createDate);
     }
 }
 
