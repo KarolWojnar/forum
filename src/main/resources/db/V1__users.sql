@@ -1,0 +1,16 @@
+INSERT INTO forum.users (id, activated, createDate, email, password, role, username) VALUES 
+(1, true, '2025-02-19 10:06:44.002427', 'admin@wp.pl', '$2a$10$62HpnsGSLfYP86R0cBIxoe/l9lax/ERyFwlL9eTF.hN1bNJUZ.KQy', 'ADMIN', 'admin'),
+(2, true, '2025-02-19 10:12:27.692282', 'wojnar@wp.pl', '$2a$10$3u1erIkqMBE66GNP01vVfOLZD.eFq3TUnemi1q5DcuXM0L7Q5Xgc2', 'USER', 'karol'),
+(3, false, '2025-02-19 10:33:43.171920', 'mic2hsadsadu@wp.pl', '$2a$10$AJbPyWNZ35Dj9EU0OrW2OO0uINYAqydB6YABAEk0XU59IX/P4GxAm', 'USER', 'michal'),
+(4, false, '2025-02-19 10:37:30.741113', 'rapowanie@wp.pl', '$2a$10$u0D0Rz6zyVytJ.cY.HGKuOixUtEBjx5KvCHrmSugBR/PGjVxIL4fm', 'USER', 'janek'),
+(5, true, '2025-02-19 14:36:07.998382', 'ka@wp.pl', '$2a$10$tN6GGvVJsUymxEsnBXchge0dWUWD6sDdYuozdec19m2nH3vnW97l.', 'USER', 'lokacja'),
+(6, true, '2025-02-19 15:00:00.000000', 'anna@wp.pl', '$2a$10$62HpnsGSLfYP86R0cBIxoe/l9lax/ERyFwlL9eTF.hN1bNJUZ.KQy', 'USER', 'anna'),
+(7, true, '2025-02-19 15:10:00.000000', 'tomek@wp.pl', '$2a$10$62HpnsGSLfYP86R0cBIxoe/l9lax/ERyFwlL9eTF.hN1bNJUZ.KQy', 'USER', 'tomek'),
+(8, true, '2025-02-19 15:20:00.000000', 'julia@wp.pl', '$2a$10$62HpnsGSLfYP86R0cBIxoe/l9lax/ERyFwlL9eTF.hN1bNJUZ.KQy', 'USER', 'julia'),
+(9, true, '2025-02-19 15:30:00.000000', 'marek@wp.pl', '$2a$10$62HpnsGSLfYP86R0cBIxoe/l9lax/ERyFwlL9eTF.hN1bNJUZ.KQy', 'USER', 'marek'),
+(10, true, '2025-02-19 15:40:00.000000', 'kasia@wp.pl', '$2a$10$62HpnsGSLfYP86R0cBIxoe/l9lax/ERyFwlL9eTF.hN1bNJUZ.KQy', 'USER', 'kasia'),
+(11, true, '2025-02-19 19:00:00.000000', 'adam@wp.pl', '$2a$10$62HpnsGSLfYP86R0cBIxoe/l9lax/ERyFwlL9eTF.hN1bNJUZ.KQy', 'USER', 'adam'),
+(12, true, '2025-02-19 19:10:00.000000', 'ewelina@wp.pl', '$2a$10$62HpnsGSLfYP86R0cBIxoe/l9lax/ERyFwlL9eTF.hN1bNJUZ.KQy', 'USER', 'ewelina'),
+(13, true, '2025-02-19 19:20:00.000000', 'piotr@wp.pl', '$2a$10$62HpnsGSLfYP86R0cBIxoe/l9lax/ERyFwlL9eTF.hN1bNJUZ.KQy', 'USER', 'piotr'),
+(14, true, '2025-02-19 19:30:00.000000', 'krzysztof@wp.pl', '$2a$10$62HpnsGSLfYP86R0cBIxoe/l9lax/ERyFwlL9eTF.hN1bNJUZ.KQy', 'USER', 'krzysztof'),
+(15, true, '2025-02-19 19:40:00.000000', 'agnieszka@wp.pl', '$2a$10$62HpnsGSLfYP86R0cBIxoe/l9lax/ERyFwlL9eTF.hN1bNJUZ.KQy', 'USER', 'agnieszka');

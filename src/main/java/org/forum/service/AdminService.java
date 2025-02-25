@@ -9,8 +9,6 @@ import org.forum.model.entity.Activation;
 import org.forum.model.entity.User;
 import org.forum.repository.ActivationRepository;
 import org.forum.repository.UserRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -21,7 +19,6 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @Service
 @RequiredArgsConstructor
 public class AdminService {
-    private static final Logger log = LoggerFactory.getLogger(AdminService.class);
     private final EmailService emailService;
     private final ActivationRepository activationRepository;
     private final UserRepository userRepository;
@@ -31,13 +28,12 @@ public class AdminService {
             try {
                 InternetAddress internetAddress = new InternetAddress(email);
                 internetAddress.validate();
-                log.info(internetAddress.getAddress());
                 Activation adminActive = new Activation(ActivationType.ADMIN_INVITE);
                 activationRepository.save(adminActive);
                 emailService.sendEmailAdminInvitation(email, adminActive.getActivationCode(), adminActive.getExpiresAt());
                 redirect.addFlashAttribute("success", "Invite sent to " + email);
             } catch (AddressException e) {
-                redirect.addFlashAttribute("error", "Please enter a valid email address");
+                redirect.addFlashAttribute("error", "Please enter a valid email address.");
                 redirect.addFlashAttribute("email", email);
             }
         } else {

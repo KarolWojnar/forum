@@ -35,14 +35,14 @@ public class SecurityConfig {
                         .permitAll()
                 )
                 .logout(logout -> logout
-                        .logoutRequestMatcher(new AntPathRequestMatcher("/logout", "GET"))
+                        .logoutRequestMatcher(new AntPathRequestMatcher("/logout", "POST"))
                         .logoutSuccessUrl("/login?logout")
                         .deleteCookies("JSESSIONID")
                         .invalidateHttpSession(true)
                         .permitAll()
                 )
                 .sessionManagement(session -> session
-                        .maximumSessions(1)
+                        .maximumSessions(5)
                         .maxSessionsPreventsLogin(false)
                         .expiredUrl("/login?expired")
                 );

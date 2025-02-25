@@ -1,5 +1,10 @@
 <meta charset="UTF-8">
 <div th:fragment="details">
+    <div class="max-w-md mx-auto py-2 auto-dismiss" th:if="${error} or ${success}">
+        <div th:if="${error}" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative shadow-2xl" role="alert">
+            <span class="block sm:inline" th:text="${error}"></span>
+        </div>
+    </div>
     <div th:if="${#lists.size(details) > 0}" class="mt-6 bg-gray-50 p-4 rounded-lg shadow-md">
         <h4 class="text-xl font-semibold text-gray-800 mb-4">Comments</h4>
         <ul class="space-y-4" th:fragment="list-comment">

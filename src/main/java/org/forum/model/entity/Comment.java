@@ -27,8 +27,10 @@ public class Comment {
     private Post post;
     @ManyToOne
     @JoinColumn(name = "parent_comment_id")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Comment parentComment;
     @OneToMany(mappedBy = "parentComment", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private List<Comment> replies;
 
     @Column(nullable = false)
