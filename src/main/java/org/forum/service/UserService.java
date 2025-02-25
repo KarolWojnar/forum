@@ -54,7 +54,7 @@ public class UserService {
     }
 
     private boolean checkToken(String token) {
-        if (token != null) {
+        if (token != null && !token.isBlank()) {
             Optional<Activation> activation = activationRepository.findByActivationCodeAndType(token, ActivationType.ADMIN_INVITE);
             if (activation.isEmpty()) {
                 throw new UserException("Invalid activation link.");
