@@ -3,6 +3,7 @@ package org.forum.service;
 import jakarta.mail.internet.AddressException;
 import jakarta.mail.internet.InternetAddress;
 import lombok.RequiredArgsConstructor;
+import org.forum.exception.MailException;
 import org.forum.model.ActivationType;
 import org.forum.model.dto.UserDto;
 import org.forum.model.entity.Activation;
@@ -25,15 +26,19 @@ public class AdminService {
 
     public String sendInvite(String email, RedirectAttributes redirect) {
         if (email != null && !email.isEmpty()) {
+            Activation adminActive = new Activation(ActivationType.ADMIN_INVITE);
             try {
                 InternetAddress internetAddress = new InternetAddress(email);
                 internetAddress.validate();
-                Activation adminActive = new Activation(ActivationType.ADMIN_INVITE);
                 activationRepository.save(adminActive);
                 emailService.sendEmailAdminInvitation(email, adminActive.getActivationCode(), adminActive.getExpiresAt());
                 redirect.addFlashAttribute("success", "Invite sent to " + email);
             } catch (AddressException e) {
                 redirect.addFlashAttribute("error", "Please enter a valid email address.");
+                redirect.addFlashAttribute("email", email);
+            } catch (MailException e) {
+                activationRepository.delete(adminActive);
+                redirect.addFlashAttribute("error", "Error sending invite. Please try again later.");
                 redirect.addFlashAttribute("email", email);
             }
         } else {

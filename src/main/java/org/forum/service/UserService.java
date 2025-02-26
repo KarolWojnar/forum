@@ -37,6 +37,7 @@ public class UserService {
     private final EmailService emailService;
     private final ActivationRepository activationRepository;
 
+    @Transactional
     public String createUser(UserDto userDto, RedirectAttributes redirectAttributes, String token) {
         User user = userRepository.findByUsernameOrEmail(userDto.getUsername(), userDto.getEmail()).orElse(null);
         if (!ValidationUtil.validateUser(userDto, user, redirectAttributes)) {
@@ -48,14 +49,13 @@ public class UserService {
             return "redirect:/register";
         }
         try {
-            saveUser(userDto, checkToken(token), redirectAttributes);
+            return saveUser(userDto, checkToken(token), redirectAttributes);
         } catch (UserException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
             redirectAttributes.addFlashAttribute("username", userDto.getUsername());
             redirectAttributes.addFlashAttribute("email", userDto.getEmail());
             return "redirect:/register";
         }
-        return "redirect:/login";
     }
 
     private boolean checkToken(String token) {
@@ -74,18 +74,28 @@ public class UserService {
         return false;
     }
 
-    public void saveUser(UserDto userDto, boolean haveAdminToken, RedirectAttributes redirectAttributes) {
+    public String saveUser(UserDto userDto, boolean haveAdminToken, RedirectAttributes redirectAttributes) {
         userDto.setPassword(passwordEncoder.encode(userDto.getPassword()));
         Activation active = new Activation(ActivationType.REGISTRATION);
         User user = UserMapper.toEntity(userDto);
         if (haveAdminToken) {
             user.setRole("ADMIN");
         }
-        active.setUser(userRepository.save(user));
-        String token = activationRepository.save(active).getActivationCode();
-        emailService.sendEmailActivationUser(userDto.getEmail(), token);
-        redirectAttributes.addFlashAttribute("success", "User created successfully. Active your account on email.");
-        redirectAttributes.addFlashAttribute("username", userDto.getUsername());
+        try {
+            active.setUser(userRepository.save(user));
+            String token = activationRepository.save(active).getActivationCode();
+            emailService.sendEmailActivationUser(userDto.getEmail(), token);
+            redirectAttributes.addFlashAttribute("success", "User created successfully. Active your account on email.");
+            redirectAttributes.addFlashAttribute("username", userDto.getUsername());
+            return "redirect:/login";
+        } catch (MailException e) {
+            activationRepository.delete(active);
+            userRepository.delete(user);
+            redirectAttributes.addFlashAttribute("username", userDto.getUsername());
+            redirectAttributes.addFlashAttribute("email", userDto.getEmail());
+            redirectAttributes.addFlashAttribute("error", "Error sending email.");
+            return "redirect:/register";
+        }
     }
 
     @Scheduled(cron = "0 0 * * * *")
@@ -138,7 +148,6 @@ public class UserService {
         return user;
     }
 
-    @Transactional
     public String forgotPassword(String email, RedirectAttributes redirectAttributes) {
         if (email == null || email.isBlank()) {
             redirectAttributes.addFlashAttribute("error", "Email is required.");
@@ -164,6 +173,7 @@ public class UserService {
         try {
             emailService.sendEmailResetPassword(email, token);
         } catch (MailException e) {
+            activationRepository.delete(activation);
             redirectAttributes.addFlashAttribute("error", e.getMessage());
             return "redirect:/forgot-password";
         }
