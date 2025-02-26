@@ -23,7 +23,11 @@
                         <input type="password" name="password" class="w-full p-2 border rounded" required>
                     </label>
                 </div>
-                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Login</button>
+                <div class="flex justify-between">
+                    <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Login</button>
+                    <p class="mt-4 text-center"><a th:href="@{/forgot-password}" class="text-blue-500 hover:underline">Forgot password?</a>
+                    </p>
+                </div>
             </form>
             <p class="mt-4 text-center">
                 Don't have an account? <a th:href="@{/register}" class="text-blue-500 hover:underline">Register here</a>.

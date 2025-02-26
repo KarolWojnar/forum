@@ -23,7 +23,7 @@ public class EmailService {
 
     private final JavaMailSender javaMailSender;
 
-    public void sendEmail(String to, String activationToken) {
+    public void sendEmailActivationUser(String to, String activationToken) {
         try {
             String urlLink = url + "activate/" + activationToken;
             MimeMessage message = javaMailSender.createMimeMessage();
@@ -80,6 +80,34 @@ public class EmailService {
             javaMailSender.send(message);
         } catch (MessagingException e) {
             throw new MailException("Error sending admin invitation email", e);
+        }
+    }
+
+    public void sendEmailResetPassword(String to, String activationToken) {
+        try {
+            String urlLink = url + "reset-password/" + activationToken;
+            MimeMessage message = javaMailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true);
+            helper.setFrom(sender);
+            helper.setTo(to);
+            helper.setSubject("Reset your password");
+            String htmlContent = """
+                <html>
+                <body>
+                    <h2 style="color: #007bff;">Reset your password</h2>
+                    <p>Click the button below to reset your password:</p>
+                    <p><a href='%s' style='display: inline-block; padding: 10px 20px; background-color: #28a745;
+                     color: white; text-decoration: none; border-radius: 5px;'>Reset Password</a></p>
+                    <p>If the button doesn't work, use the following link:</p>
+                    <p><a href='%s'>%s</a></p>
+                    <p>Best regards,<br>Forum Team</p>
+                </body>
+                </html>
+            """.formatted(urlLink, urlLink, urlLink);
+            helper.setText(htmlContent, true);
+            javaMailSender.send(message);
+        } catch (Exception e) {
+            throw new MailException("Error sending email", e);
         }
     }
 }

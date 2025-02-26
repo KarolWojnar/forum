@@ -41,14 +41,10 @@ public class ValidationUtil {
         if (user != null) {
             redirectAttributes.addFlashAttribute("error", "User already exist.");
             return false;
-        } else if (!userDto.getPassword().equals(userDto.getConfirmPassword())) {
-            redirectAttributes.addFlashAttribute("error", "Passwords do not match.");
-            return false;
-        } else if (userDto.getPassword().length() < 8) {
-            redirectAttributes.addFlashAttribute("error", "Password must be at least 8 characters.");
-            return false;
         } else if (userDto.getUsername().length() < 3) {
             redirectAttributes.addFlashAttribute("error", "Username must be at least 3 characters.");
+            return false;
+        } else if (!validPassword(userDto.getPassword(), userDto.getConfirmPassword(), redirectAttributes)){
             return false;
         }
         try {
@@ -56,6 +52,17 @@ public class ValidationUtil {
             internetAddress.validate();
         } catch (AddressException e) {
             redirectAttributes.addFlashAttribute("error", "Please enter a valid email address.");
+            return false;
+        }
+        return true;
+    }
+
+    public static boolean validPassword(String password, String confirmPassword, RedirectAttributes redirectAttributes) {
+        if (!password.equals(confirmPassword)) {
+            redirectAttributes.addFlashAttribute("error", "Passwords do not match.");
+            return false;
+        } else if (password.length() < 8) {
+            redirectAttributes.addFlashAttribute("error", "Password must be at least 8 characters.");
             return false;
         }
         return true;

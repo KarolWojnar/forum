@@ -1,9 +1,13 @@
 package org.forum.service;
 
+import jakarta.mail.internet.AddressException;
+import jakarta.mail.internet.InternetAddress;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.forum.exception.MailException;
 import org.forum.exception.UserException;
 import org.forum.model.ActivationType;
+import org.forum.model.dto.ResetPasswordDto;
 import org.forum.model.dto.UserDto;
 import org.forum.model.entity.Activation;
 import org.forum.model.entity.User;
@@ -16,6 +20,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.time.LocalDateTime;
@@ -78,7 +83,7 @@ public class UserService {
         }
         active.setUser(userRepository.save(user));
         String token = activationRepository.save(active).getActivationCode();
-        emailService.sendEmail(userDto.getEmail(), token);
+        emailService.sendEmailActivationUser(userDto.getEmail(), token);
         redirectAttributes.addFlashAttribute("success", "User created successfully. Active your account on email.");
         redirectAttributes.addFlashAttribute("username", userDto.getUsername());
     }
@@ -131,5 +136,68 @@ public class UserService {
             throw new UserException("Failed authentication");
         }
         return user;
+    }
+
+    @Transactional
+    public String forgotPassword(String email, RedirectAttributes redirectAttributes) {
+        if (email == null || email.isBlank()) {
+            redirectAttributes.addFlashAttribute("error", "Email is required.");
+            return "redirect:/forgot-password";
+        }
+
+        try {
+            InternetAddress emailValid = new InternetAddress(email);
+            emailValid.validate();
+        } catch (AddressException e) {
+            redirectAttributes.addFlashAttribute("error", "Email is not valid.");
+            return "redirect:/forgot-password";
+        }
+
+        User user = userRepository.findByEmail(email).orElse(null);
+        if (user == null) {
+            redirectAttributes.addFlashAttribute("error", "User not found.");
+            return "redirect:/forgot-password";
+        }
+        Activation activation = new Activation(ActivationType.PASSWORD_RESET);
+        activation.setUser(user);
+        String token = activationRepository.save(activation).getActivationCode();
+        try {
+            emailService.sendEmailResetPassword(email, token);
+        } catch (MailException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/forgot-password";
+        }
+        redirectAttributes.addFlashAttribute("success", "Password reset link sent to your email.");
+        return "redirect:/login";
+    }
+
+    public String resetPassword(String uid, Model model) {
+        Activation activation = activationRepository.findByActivationCodeAndType(uid, ActivationType.PASSWORD_RESET).orElse(null);
+        if (activation == null || activation.getExpiresAt().isBefore(LocalDateTime.now())) {
+            model.addAttribute("invalidToken", "Invalid reset password link or token expired.");
+            return "reset-password";
+        }
+        model.addAttribute("token", uid);
+        model.addAttribute("username", activation.getUser().getUsername());
+        return "reset-password";
+    }
+
+    public String changePassword(ResetPasswordDto resetPasswordDto, RedirectAttributes redirectAttributes) {
+        if (!ValidationUtil.validPassword(resetPasswordDto.getPassword(), resetPasswordDto.getConfirmPassword(), redirectAttributes)) {
+            redirectAttributes.addFlashAttribute("token", resetPasswordDto.getToken());
+            redirectAttributes.addFlashAttribute("username", resetPasswordDto.getUsername());
+            return "redirect:/reset-password/" + resetPasswordDto.getToken();
+        }
+        Activation activation = activationRepository.findByActivationCodeAndType(resetPasswordDto.getToken(), ActivationType.PASSWORD_RESET).orElse(null);
+        if (activation == null || activation.getExpiresAt().isBefore(LocalDateTime.now())) {
+            redirectAttributes.addFlashAttribute("invalidToken", "Invalid reset password link or token expired.");
+            return "redirect:/reset-password" + resetPasswordDto.getToken();
+        }
+        User user = activation.getUser();
+        user.setPassword(passwordEncoder.encode(resetPasswordDto.getPassword()));
+        userRepository.save(user);
+        activationRepository.delete(activation);
+        redirectAttributes.addFlashAttribute("success", "Password changed successfully.");
+        return "redirect:/login";
     }
 }
