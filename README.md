@@ -50,3 +50,18 @@ cp target/forum-application.war /path/to/tomcat/webapps/
 /path/to/tomcat/bin/startup.sh
 ```
 - Open your browser and navigate to `http://localhost:8080`
+
+## The application comes with predefined users for testing purposes:
+ - Admin user:
+   - Username: admin 
+   - Password: admin123 
+   - Role: ADMIN 
+ - Regular user:
+   - Username: user
+   - Password: password123 
+   - Role: USER
+
+You can modify or add more users by either:
+- Adding SQL inserts in database migration scripts (Liquibase changelog)
+- Using the application's registration functionality
+- Modifying the database initialization code

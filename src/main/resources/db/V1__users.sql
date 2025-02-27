@@ -1,9 +1,9 @@
 INSERT INTO forum.users (id, activated, createDate, email, password, role, username) VALUES 
 (1, true, '2025-02-19 10:06:44.002427', 'admin@wp.pl', '$2a$10$62HpnsGSLfYP86R0cBIxoe/l9lax/ERyFwlL9eTF.hN1bNJUZ.KQy', 'ADMIN', 'admin'),
-(2, true, '2025-02-19 10:12:27.692282', 'wojnar@wp.pl', '$2a$10$3u1erIkqMBE66GNP01vVfOLZD.eFq3TUnemi1q5DcuXM0L7Q5Xgc2', 'USER', 'karol'),
+(2, true, '2025-02-19 10:12:27.692282', 'user@wp.pl', '$2a$10$ej9CXDlr1MNHgEAF7vM89eqcI5bRBRs3QSYdej7RYcU16BHyAWho2', 'USER', 'user'),
 (3, false, '2025-02-19 10:33:43.171920', 'mic2hsadsadu@wp.pl', '$2a$10$AJbPyWNZ35Dj9EU0OrW2OO0uINYAqydB6YABAEk0XU59IX/P4GxAm', 'USER', 'michal'),
-(4, false, '2025-02-19 10:37:30.741113', 'rapowanie@wp.pl', '$2a$10$u0D0Rz6zyVytJ.cY.HGKuOixUtEBjx5KvCHrmSugBR/PGjVxIL4fm', 'USER', 'janek'),
-(5, true, '2025-02-19 14:36:07.998382', 'ka@wp.pl', '$2a$10$tN6GGvVJsUymxEsnBXchge0dWUWD6sDdYuozdec19m2nH3vnW97l.', 'USER', 'lokacja'),
+(4, false, '2025-02-19 10:37:30.741113', 'test@wp.pl', '$2a$10$u0D0Rz6zyVytJ.cY.HGKuOixUtEBjx5KvCHrmSugBR/PGjVxIL4fm', 'USER', 'janek'),
+(5, true, '2025-02-19 14:36:07.998382', 'ka@wp.pl', '$2a$10$tN6GGvVJsUymxEsnBXchge0dWUWD6sDdYuozdec19m2nH3vnW97l.', 'USER', 'test'),
 (6, true, '2025-02-19 15:00:00.000000', 'anna@wp.pl', '$2a$10$62HpnsGSLfYP86R0cBIxoe/l9lax/ERyFwlL9eTF.hN1bNJUZ.KQy', 'USER', 'anna'),
 (7, true, '2025-02-19 15:10:00.000000', 'tomek@wp.pl', '$2a$10$62HpnsGSLfYP86R0cBIxoe/l9lax/ERyFwlL9eTF.hN1bNJUZ.KQy', 'USER', 'tomek'),
 (8, true, '2025-02-19 15:20:00.000000', 'julia@wp.pl', '$2a$10$62HpnsGSLfYP86R0cBIxoe/l9lax/ERyFwlL9eTF.hN1bNJUZ.KQy', 'USER', 'julia'),
