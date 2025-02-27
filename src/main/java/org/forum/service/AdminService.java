@@ -55,4 +55,30 @@ public class AdminService {
         model.addAttribute("username", username);
         model.addAttribute("totalPages", users.getTotalPages());
     }
+
+    public String deleteUser(Long id, RedirectAttributes redirect) {
+        try {
+            userRepository.deleteById(id);
+            redirect.addFlashAttribute("success", "User deleted successfully");
+        } catch (Exception e) {
+            redirect.addFlashAttribute("error", "Error deleting user");
+        }
+        return "redirect:/admin";
+    }
+
+    public String deactivateUser(Long id, RedirectAttributes redirect) {
+        try {
+            User user = userRepository.findById(id).orElse(null);
+            if (user == null) {
+                redirect.addFlashAttribute("error", "User not found");
+                return "redirect:/admin";
+            }
+            user.setActivated(false);
+            userRepository.save(user);
+            redirect.addFlashAttribute("success", "User deactivated successfully");
+        } catch (Exception e) {
+            redirect.addFlashAttribute("error", "Error deactivating user");
+        }
+        return "redirect:/admin";
+    }
 }

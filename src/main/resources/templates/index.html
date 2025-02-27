@@ -1,18 +1,57 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.w3.org/1999/xhtml" lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Homepage</title>
     <link rel="stylesheet" th:href="@{/static/css/output.css}">
 </head>
-<body>
+<body class="bg-gray-100">
+
 <div th:replace="~{fragments/header :: header}"></div>
 
-<div class="p-4">
-    <div class="bg-white p-6 rounded-lg shadow-md">
-        <h2 class="text-2xl font-bold mb-4">Welcome to the Homepage!</h2>
-        <p>This is the default content.</p>
+<div class="container mx-auto p-6">
+    <div class="grid gap-8 justify-center mx-auto">
+        <div class="flex flex-col items-center justify-center p-8 bg-white rounded-xl shadow-xl transform transition-all hover:scale-105 hover:shadow-2xl hover:bg-blue-50">
+            <a th:href="@{/posts}" class="text-center text-gray-800">
+                <h3 class="text-2xl font-semibold mb-4">View Posts</h3>
+                <p class="text-gray-600 mb-4">Explore a wide range of posts, from insightful articles to engaging discussions. Whether you're looking for inspiration or knowledge, you'll find something interesting to read here.</p>
+                <p class="text-gray-500">Browse all posts</p>
+            </a>
+        </div>
+
+        <div sec:authorize="isAuthenticated()" class="flex flex-col items-center justify-center p-8 bg-white rounded-xl shadow-xl transform transition-all hover:scale-105 hover:shadow-2xl hover:bg-blue-50">
+            <a th:href="@{/posts/new}" class="text-center text-gray-800">
+                <h3 class="text-2xl font-semibold mb-4">Create New Post</h3>
+                <p class="text-gray-600 mb-4">Have something to share with the world? Create a new post and express your thoughts, ideas, or stories. It's easy to start, and your voice matters!</p>
+                <p class="text-gray-500">Write a new post</p>
+            </a>
+        </div>
+
+        <div sec:authorize="isAuthenticated()" class="flex flex-col items-center justify-center p-8 bg-white rounded-xl shadow-xl transform transition-all hover:scale-105 hover:shadow-2xl hover:bg-blue-50">
+            <a th:href="@{/users/{username}(username=${#authentication.name})}" class="text-center text-gray-800">
+                <h3 class="text-2xl font-semibold mb-4">Go to Profile</h3>
+                <p class="text-gray-600 mb-4">Your profile is the place where you can customize your personal settings. Take a moment to update your profile and make it truly yours!</p>
+                <p class="text-gray-500">View and update your personal details</p>
+            </a>
+        </div>
+
+        <div sec:authorize="hasRole('ADMIN')" class="flex flex-col items-center justify-center p-8 bg-white rounded-xl shadow-xl transform transition-all hover:scale-105 hover:shadow-2xl hover:bg-blue-50">
+            <a th:href="@{/admin}" class="text-center text-gray-800">
+                <h3 class="text-2xl font-semibold mb-4">Admin Panel</h3>
+                <p class="text-gray-600 mb-4">Manage your site efficiently with the Admin Panel. Here you can control user access, invite new admin by email.</p>
+                <p class="text-gray-500">Manage users and settings</p>
+            </a>
+        </div>
+
+        <div sec:authorize="!isAuthenticated()" class="flex flex-col items-center justify-center p-8 bg-white rounded-xl shadow-xl transform transition-all hover:scale-105 hover:shadow-2xl hover:bg-blue-50">
+            <a th:href="@{/login}" class="text-center text-gray-800">
+                <h3 class="text-2xl font-semibold mb-4">Login</h3>
+                <p class="text-gray-600 mb-4">Access your personalized content, interact with other users, and manage your account. If you're already a member, just log in to continue where you left off.</p>
+                <p class="text-gray-500">Access your account</p>
+            </a>
+        </div>
     </div>
 </div>
+
 </body>
 </html>

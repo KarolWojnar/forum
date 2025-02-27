@@ -1,6 +1,7 @@
 package org.forum.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.forum.model.entity.User;
 import org.forum.repository.UserRepository;
 import org.springframework.security.core.GrantedAuthority;
@@ -14,6 +15,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class UserDetailsImplService implements UserDetailsService {
     private final UserRepository userRepository;
@@ -21,6 +23,7 @@ public class UserDetailsImplService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) {
         User user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("User " + username + " not found"));
+        log.info("New session for {}", username);
         return org.springframework.security.core.userdetails.User.builder()
                 .username(user.getUsername())
                 .password(user.getPassword())

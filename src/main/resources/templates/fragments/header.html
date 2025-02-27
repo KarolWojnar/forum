@@ -19,6 +19,10 @@
                    sec:authorize="hasRole('ADMIN')">
                     Admin Panel
                 </a>
+                <a th:href="@{/users/{username}(username=${#authentication.name})}" class="hover:text-purple-200 transition duration-300"
+                   sec:authorize="isAuthenticated()">
+                    Profile
+                </a>
                 <a th:href="@{/login}" class="hover:text-purple-200 transition duration-300"
                    sec:authorize="!isAuthenticated()">
                     Login

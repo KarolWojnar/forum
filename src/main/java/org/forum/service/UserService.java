@@ -2,6 +2,7 @@ package org.forum.service;
 
 import jakarta.mail.internet.AddressException;
 import jakarta.mail.internet.InternetAddress;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.forum.exception.MailException;
@@ -17,6 +18,7 @@ import org.forum.repository.UserRepository;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -87,6 +89,7 @@ public class UserService {
             emailService.sendEmailActivationUser(userDto.getEmail(), token);
             redirectAttributes.addFlashAttribute("success", "User created successfully. Active your account on email.");
             redirectAttributes.addFlashAttribute("username", userDto.getUsername());
+            log.info("User {} created.", user.getUsername());
             return "redirect:/login";
         } catch (MailException e) {
             activationRepository.delete(active);
@@ -121,6 +124,7 @@ public class UserService {
             user.setActivated(true);
             userRepository.save(user);
             activationRepository.delete(activation.get());
+            log.info("User {} activated.", user.getUsername());
             model.addAttribute("success", "Account activated successfully.");
             model.addAttribute("username", user.getUsername());
         }
@@ -208,6 +212,45 @@ public class UserService {
         userRepository.save(user);
         activationRepository.delete(activation);
         redirectAttributes.addFlashAttribute("success", "Password changed successfully.");
+        return "redirect:/login";
+    }
+
+    public String getUserData(String username, RedirectAttributes redirect, Model model) {
+        User userAuth = findAuthenticatedUser(SecurityContextHolder.getContext().getAuthentication(), redirect);
+        User user = userRepository.findByUsername(username).orElse(null);
+        if (!userAuth.equals(user)) {
+            return "redirect:/users/" + userAuth.getUsername();
+        }
+        model.addAttribute("user", UserDto.mapToUserDto(user));
+        return "profile";
+    }
+
+    public String updateUsername(UserDto user, RedirectAttributes redirect, HttpSession session) {
+        User userAuth = findAuthenticatedUser(SecurityContextHolder.getContext().getAuthentication(), redirect);
+        String oldUsername = userAuth.getUsername();
+        if (user.getUsername() == null || user.getUsername().isBlank()) {
+            redirect.addFlashAttribute("error", "Username is required.");
+            return "redirect:/users/" + oldUsername;
+        }
+
+        if (user.getUsername().equals(oldUsername)) {
+            redirect.addFlashAttribute("error", "Username is the same.");
+            return "redirect:/users/" + oldUsername;
+        }
+
+        if (userRepository.findByUsername(user.getUsername()).isPresent()) {
+            redirect.addFlashAttribute("error", "Username already exists.");
+            return "redirect:/users/" + oldUsername;
+        }
+
+        userAuth.setUsername(user.getUsername());
+        userRepository.save(userAuth);
+
+        SecurityContextHolder.clearContext();
+        session.invalidate();
+        redirect.addFlashAttribute("success", "Username changed successfully.");
+        redirect.addFlashAttribute("username", user.getUsername());
+        log.info("User {} changed username to {}.", oldUsername, user.getUsername());
         return "redirect:/login";
     }
 }

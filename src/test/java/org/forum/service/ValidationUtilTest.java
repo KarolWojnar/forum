@@ -57,7 +57,7 @@ class ValidationUtilTest {
 
     @Test
     void validateUser() {
-        UserDto validUserDto = new UserDto("validUsername", "validEmail@example.com", "validPassword", "validPassword");
+        UserDto validUserDto = new UserDto(1L, "validUsername", "validEmail@example.com", "validPassword", "validPassword", "USER", true);
 
         assertTrue(ValidationUtil.validateUser(validUserDto, null, redirectAttributes));
         assertFalse(ValidationUtil.validateUser(validUserDto, new User(), redirectAttributes));

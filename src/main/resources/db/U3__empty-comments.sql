@@ -1,0 +1,1 @@
+DELETE FROM forum.comments WHERE 1;

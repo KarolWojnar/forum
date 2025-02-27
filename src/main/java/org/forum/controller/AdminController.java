@@ -5,10 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.forum.service.AdminService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
@@ -33,5 +30,15 @@ public class AdminController {
     @PostMapping("/invite")
     public String inviteAdmin(@RequestParam("email") String email, RedirectAttributes redirect) {
         return adminService.sendInvite(email, redirect);
+    }
+
+    @PostMapping("/delete")
+    public String deleteUser(@RequestParam("id") Long id, RedirectAttributes redirect) {
+        return adminService.deleteUser(id, redirect);
+    }
+
+    @PostMapping("/deactivate")
+    public String updateUser(@RequestParam("id") Long id, RedirectAttributes redirect) {
+        return adminService.deactivateUser(id, redirect);
     }
 }

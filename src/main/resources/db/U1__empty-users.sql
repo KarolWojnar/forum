@@ -1,0 +1,1 @@
+DELETE FROM forum.users WHERE 1;
