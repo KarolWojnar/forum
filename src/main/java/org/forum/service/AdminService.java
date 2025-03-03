@@ -14,6 +14,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -24,6 +25,7 @@ public class AdminService {
     private final ActivationRepository activationRepository;
     private final UserRepository userRepository;
 
+    @Transactional(rollbackFor = MailException.class)
     public String sendInvite(String email, RedirectAttributes redirect) {
         if (email != null && !email.isEmpty()) {
             Activation adminActive = new Activation(ActivationType.ADMIN_INVITE);
@@ -35,10 +37,6 @@ public class AdminService {
                 redirect.addFlashAttribute("success", "Invite sent to " + email);
             } catch (AddressException e) {
                 redirect.addFlashAttribute("error", "Please enter a valid email address.");
-                redirect.addFlashAttribute("email", email);
-            } catch (MailException e) {
-                activationRepository.delete(adminActive);
-                redirect.addFlashAttribute("error", "Error sending invite. Please try again later.");
                 redirect.addFlashAttribute("email", email);
             }
         } else {

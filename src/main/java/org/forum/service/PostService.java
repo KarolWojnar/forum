@@ -2,7 +2,7 @@ package org.forum.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.forum.exception.UserException;
+import org.forum.exception.PostException;
 import org.forum.model.dto.PostDto;
 import org.forum.model.dto.PostInfoDto;
 import org.forum.model.entity.User;
@@ -28,14 +28,10 @@ public class PostService {
         if (!ValidationUtil.validPost(post, redAttrs)) {
             return "redirect:/posts/new";
         }
-        try {
-            User user = userService.findAuthenticatedUser(SecurityContextHolder.getContext().getAuthentication(), redAttrs);
-            postRepository.save(PostDto.toEntity(post, user));
-            redAttrs.addFlashAttribute("success", "Post created successfully.");
-            return "redirect:/posts";
-        } catch (UserException e) {
-            return "redirect:/login";
-        }
+        User user = userService.findAuthenticatedUser(SecurityContextHolder.getContext().getAuthentication());
+        postRepository.save(PostDto.toEntity(post, user));
+        redAttrs.addFlashAttribute("success", "Post created successfully.");
+        return "redirect:/posts";
     }
 
     public Page<PostInfoDto> getPosts(int page, String keyWord, String sort, String direction) {
@@ -48,19 +44,16 @@ public class PostService {
         return postRepository.findPostsInfo(pageable, keyWord);
     }
 
-    public void archivePost(Long id, RedirectAttributes redirect) {
-        try {
-            User user = userService.findAuthenticatedUser(SecurityContextHolder.getContext().getAuthentication(), redirect);
-            if (user.getRole().equals("ADMIN")) {
-                postRepository.archivePost(id);
-            } else {
-                int updatedRecords = postRepository.archivePostByIdAndUser(user, id);
-                if (updatedRecords == 0) {
-                    redirect.addFlashAttribute("error", "You are not the author of this post.");
-                }
+    public String archivePost(Long id) {
+        User user = userService.findAuthenticatedUser(SecurityContextHolder.getContext().getAuthentication());
+        if (user.getRole().equals("ADMIN")) {
+            postRepository.archivePost(id);
+        } else {
+            int updatedRecords = postRepository.archivePostByIdAndUser(user, id);
+            if (updatedRecords == 0) {
+                throw new PostException("You are not authorized to archive this post.", "/posts");
             }
-        } catch (UserException e) {
-            throw new UserException("User not found or unauthorized.");
         }
+        return "posts";
     }
 }

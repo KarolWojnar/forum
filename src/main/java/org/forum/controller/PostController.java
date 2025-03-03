@@ -63,8 +63,7 @@ public class PostController {
     }
 
     @PatchMapping("/{id}/archive")
-    public String archivePost(@PathVariable("id") Long id, RedirectAttributes redirect) {
-        postService.archivePost(id, redirect);
-        return "posts";
+    public String archivePost(@PathVariable("id") Long id) {
+        return postService.archivePost(id);
     }
 }

@@ -16,8 +16,8 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping("/{username}")
-    public String getUser(@PathVariable("username") String username, RedirectAttributes redirect, Model model) {
-        return userService.getUserData(username, redirect, model);
+    public String getUser(@PathVariable("username") String username, Model model) {
+        return userService.getUserData(username, model);
     }
 
     @PostMapping

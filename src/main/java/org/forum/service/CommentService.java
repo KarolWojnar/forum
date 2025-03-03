@@ -2,7 +2,6 @@ package org.forum.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.forum.exception.UserException;
 import org.forum.model.dto.CommentDto;
 import org.forum.model.dto.NewCommentDto;
 import org.forum.model.entity.Comment;
@@ -51,12 +50,8 @@ public class CommentService {
     private String createCommentAndSave(Post post, NewCommentDto comment, RedirectAttributes redirect) {
         Comment newComment = new Comment();
         newComment.setContent(comment.getContent());
-        try {
-            newComment.setUser(userService.findAuthenticatedUser(SecurityContextHolder.getContext().getAuthentication(), redirect));
-        } catch (UserException e) {
-            redirect.addFlashAttribute("error", e.getMessage());
-            return "redirect:/login";
-        }
+        newComment.setUser(userService.findAuthenticatedUser(SecurityContextHolder.getContext().getAuthentication()));
+
         newComment.setPost(post);
         if (comment.getParentId() != null) {
             newComment.setParentComment(commentRepository.findById(comment.getParentId()).orElse(null));
@@ -71,29 +66,25 @@ public class CommentService {
         return comments.stream().map(CommentDto::fromEntity).toList();
     }
 
-    public String deleteComment(Long id, RedirectAttributes redirect) {
-        try {
-            User currentUser = userService.findAuthenticatedUser(SecurityContextHolder.getContext().getAuthentication(), redirect);
-            Comment comment = commentRepository.findById(id).orElse(null);
+    public String deleteComment(Long id) {
+        User currentUser = userService.findAuthenticatedUser(SecurityContextHolder.getContext().getAuthentication());
+        Comment comment = commentRepository.findById(id).orElse(null);
 
-            if (comment == null) {
-                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Comment not found or unauthorized.");
-            }
-
-            if (currentUser.getRole().equals("ADMIN") || currentUser.equals(comment.getUser())) {
-                if (comment.getParentComment() != null) {
-                    Comment parent = comment.getParentComment();
-                    parent.getReplies().remove(comment);
-                    commentRepository.save(parent);
-                }
-                commentRepository.delete(comment);
-            } else {
-                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorized to delete this comment.");
-            }
-            return "posts";
-        } catch (UserException e) {
-            return "redirect:/login";
+        if (comment == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Comment not found or unauthorized.");
         }
+
+        if (currentUser.getRole().equals("ADMIN") || currentUser.equals(comment.getUser())) {
+            if (comment.getParentComment() != null) {
+                Comment parent = comment.getParentComment();
+                parent.getReplies().remove(comment);
+                commentRepository.save(parent);
+            }
+            commentRepository.delete(comment);
+        } else {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorized to delete this comment.");
+        }
+        return "posts";
     }
 
     public String getReplies(Long id, Model redirect) {

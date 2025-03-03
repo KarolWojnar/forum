@@ -47,7 +47,7 @@ public class EmailService {
             helper.setText(htmlContent, true);
             javaMailSender.send(message);
         } catch (Exception e) {
-            throw new MailException("Error sending email", e);
+            throw new MailException("Error sending email", e, "register");
         }
     }
 
@@ -79,7 +79,7 @@ public class EmailService {
             helper.setText(htmlContent, true);
             javaMailSender.send(message);
         } catch (MessagingException e) {
-            throw new MailException("Error sending admin invitation email", e);
+            throw new MailException("Error sending admin invitation email", e, "/admin");
         }
     }
 
@@ -107,7 +107,7 @@ public class EmailService {
             helper.setText(htmlContent, true);
             javaMailSender.send(message);
         } catch (Exception e) {
-            throw new MailException("Error sending email", e);
+            throw new MailException("Error sending email", e, "/forgot-password");
         }
     }
 }

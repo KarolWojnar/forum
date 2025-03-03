@@ -42,4 +42,20 @@
     </div>
 </div>
 </body>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const alerts = document.querySelectorAll('.auto-dismiss');
+
+        alerts.forEach(function(alert) {
+            setTimeout(function() {
+                alert.style.transition = 'opacity 0.5s ease-in-out';
+                alert.style.opacity = '0';
+
+                setTimeout(function() {
+                    alert.remove();
+                }, 500);
+            }, 6000);
+        });
+    });
+</script>
 </html>
