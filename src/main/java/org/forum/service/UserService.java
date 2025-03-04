@@ -38,6 +38,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
     private final ActivationRepository activationRepository;
+    private final HttpSession session;
 
     @Transactional(rollbackFor = MailException.class)
     public String createUser(UserDto userDto, RedirectAttributes redirectAttributes, String token) {
@@ -126,18 +127,21 @@ public class UserService {
 
     public User findAuthenticatedUser(Authentication auth) {
         if (auth == null) {
-            throw new UserException("Failed authentication", "/login");
+            clearSecurityContext();
+            throw new UserException("Failed authentication", "/login?logout");
         }
 
         Object principal = auth.getPrincipal();
         if ((!(principal instanceof UserDetails userDetails))) {
-            throw new UserException("Failed authentication", "/login");
+            clearSecurityContext();
+            throw new UserException("Failed authentication", "/login?logout");
         }
 
         User user = userRepository.findByUsername(userDetails.getUsername()).orElse(null);
 
         if (user == null) {
-            throw new UserException("Failed authentication", "/login");
+            clearSecurityContext();
+            throw new UserException("Failed authentication", "/login?logout");
         }
         return user;
     }
@@ -229,5 +233,10 @@ public class UserService {
         redirect.addFlashAttribute("username", user.getUsername());
         log.info("User {} changed username to {}.", oldUsername, user.getUsername());
         return "redirect:/login";
+    }
+
+    private void clearSecurityContext() {
+        SecurityContextHolder.clearContext();
+        session.invalidate();
     }
 }

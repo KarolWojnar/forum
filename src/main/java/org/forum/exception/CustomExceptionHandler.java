@@ -10,7 +10,9 @@ public class CustomExceptionHandler {
 
     @ExceptionHandler(ForumException.class)
     public RedirectView handleException(ForumException e, RedirectAttributes redirectAttributes) {
-        redirectAttributes.addFlashAttribute("error", e.getMessage());
+        if (e.getMessage() != null && !e.getMessage().isBlank()) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
         return new RedirectView(e.getViewName());
     }
 }
