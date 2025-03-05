@@ -41,23 +41,22 @@ public class UserService {
     private final HttpSession session;
 
     @Transactional(rollbackFor = MailException.class)
-    public String createUser(UserDto userDto, RedirectAttributes redirectAttributes, String token) {
+    public void createUser(UserDto userDto, RedirectAttributes redirectAttributes, String token) {
         User user = userRepository.findByUsernameOrEmail(userDto.getUsername(), userDto.getEmail()).orElse(null);
         if (!ValidationUtil.validateUser(userDto, user, redirectAttributes)) {
             redirectAttributes.addFlashAttribute("username", userDto.getUsername());
             redirectAttributes.addFlashAttribute("email", userDto.getEmail());
             if (token != null) {
-                return "redirect:/register?token=" + token;
+                throw new UserException(redirectAttributes.getFlashAttributes().get("error").toString(), "/register?token=" + token);
             }
-            return "redirect:/register";
+            throw new UserException(redirectAttributes.getFlashAttributes().get("error").toString(), "/register");
         }
         try {
-            return saveUser(userDto, checkToken(token), redirectAttributes);
+            saveUser(userDto, checkToken(token), redirectAttributes);
         } catch (UserException e) {
-            redirectAttributes.addFlashAttribute("error", e.getMessage());
             redirectAttributes.addFlashAttribute("username", userDto.getUsername());
             redirectAttributes.addFlashAttribute("email", userDto.getEmail());
-            return "redirect:/register";
+            throw new UserException(e.getMessage(), "/register");
         }
     }
 
@@ -77,7 +76,7 @@ public class UserService {
         return false;
     }
 
-    public String saveUser(UserDto userDto, boolean haveAdminToken, RedirectAttributes redirectAttributes) {
+    public void saveUser(UserDto userDto, boolean haveAdminToken, RedirectAttributes redirectAttributes) {
         userDto.setPassword(passwordEncoder.encode(userDto.getPassword()));
         Activation active = new Activation(ActivationType.REGISTRATION);
         User user = UserMapper.toEntity(userDto);
@@ -91,7 +90,6 @@ public class UserService {
         redirectAttributes.addFlashAttribute("success", "User created successfully. Active your account on email.");
         redirectAttributes.addFlashAttribute("username", userDto.getUsername());
         log.info("User {} created.", user.getUsername());
-        return "redirect:/login";
     }
 
     @Scheduled(cron = "0 0 * * * *")
@@ -104,15 +102,14 @@ public class UserService {
     }
 
     @Transactional
-    public String activateUser(String uid, Model model) {
+    public void activateUser(String uid, Model model) {
         Optional<Activation> activation = activationRepository.findByActivationCodeAndType(uid, ActivationType.REGISTRATION);
         if (activation.isEmpty()) {
             model.addAttribute("error", "Invalid activation link.");
         } else {
             if (activation.get().getExpiresAt().isBefore(LocalDateTime.now())) {
                 activationRepository.delete(activation.get());
-                model.addAttribute("error", "Activation link has expired.");
-                return "login";
+                throw new UserException("Activation link expired.", "/login");
             }
             User user = activation.get().getUser();
             user.setActivated(true);
@@ -122,7 +119,6 @@ public class UserService {
             model.addAttribute("success", "Account activated successfully.");
             model.addAttribute("username", user.getUsername());
         }
-        return "login";
     }
 
     public User findAuthenticatedUser(Authentication auth) {
@@ -147,7 +143,7 @@ public class UserService {
     }
 
     @Transactional(rollbackFor = MailException.class)
-    public String forgotPassword(String email, RedirectAttributes redirectAttributes) {
+    public void forgotPassword(String email, RedirectAttributes redirectAttributes) {
         if (email == null || email.isBlank()) {
             throw new MailException("Email is required.", "/forgot-password");
         }
@@ -168,24 +164,22 @@ public class UserService {
         String token = activationRepository.save(activation).getActivationCode();
         emailService.sendEmailResetPassword(email, token);
         redirectAttributes.addFlashAttribute("success", "Password reset link sent to your email.");
-        return "redirect:/login";
     }
 
-    public String resetPassword(String uid, Model model) {
+    public void resetPassword(String uid, Model model) {
         Activation activation = activationRepository.findByActivationCodeAndType(uid, ActivationType.PASSWORD_RESET).orElse(null);
         if (activation == null || activation.getExpiresAt().isBefore(LocalDateTime.now())) {
             throw new UserException("Invalid reset password link or token expired.", "/reset-password");
         }
         model.addAttribute("token", uid);
         model.addAttribute("username", activation.getUser().getUsername());
-        return "reset-password";
     }
 
-    public String changePassword(ResetPasswordDto resetPasswordDto, RedirectAttributes redirectAttributes) {
+    public boolean changePassword(ResetPasswordDto resetPasswordDto, RedirectAttributes redirectAttributes) {
         if (!ValidationUtil.validPassword(resetPasswordDto.getPassword(), resetPasswordDto.getConfirmPassword(), redirectAttributes)) {
             redirectAttributes.addFlashAttribute("token", resetPasswordDto.getToken());
             redirectAttributes.addFlashAttribute("username", resetPasswordDto.getUsername());
-            return "redirect:/reset-password/" + resetPasswordDto.getToken();
+            return false;
         }
         Activation activation = activationRepository.findByActivationCodeAndType(resetPasswordDto.getToken(), ActivationType.PASSWORD_RESET).orElse(null);
         if (activation == null || activation.getExpiresAt().isBefore(LocalDateTime.now())) {
@@ -196,20 +190,19 @@ public class UserService {
         userRepository.save(user);
         activationRepository.delete(activation);
         redirectAttributes.addFlashAttribute("success", "Password changed successfully.");
-        return "redirect:/login";
+        return true;
     }
 
-    public String getUserData(String username, Model model) {
+    public void getUserData(String username, Model model) {
         User userAuth = findAuthenticatedUser(SecurityContextHolder.getContext().getAuthentication());
         User user = userRepository.findByUsername(username).orElse(null);
         if (!userAuth.equals(user)) {
-            return "redirect:/users/" + userAuth.getUsername();
+            throw new UserException("", "/users/" + userAuth.getUsername());
         }
         model.addAttribute("user", UserDto.mapToUserDto(user));
-        return "profile";
     }
 
-    public String updateUsername(UserDto user, RedirectAttributes redirect, HttpSession session) {
+    public void updateUsername(UserDto user, RedirectAttributes redirect, HttpSession session) {
         User userAuth = findAuthenticatedUser(SecurityContextHolder.getContext().getAuthentication());
         String oldUsername = userAuth.getUsername();
         if (user.getUsername() == null || user.getUsername().isBlank()) {
@@ -232,7 +225,6 @@ public class UserService {
         redirect.addFlashAttribute("success", "Username changed successfully.");
         redirect.addFlashAttribute("username", user.getUsername());
         log.info("User {} changed username to {}.", oldUsername, user.getUsername());
-        return "redirect:/login";
     }
 
     private void clearSecurityContext() {

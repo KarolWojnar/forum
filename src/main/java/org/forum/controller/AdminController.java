@@ -29,16 +29,19 @@ public class AdminController {
 
     @PostMapping("/invite")
     public String inviteAdmin(@RequestParam("email") String email, RedirectAttributes redirect) {
-        return adminService.sendInvite(email, redirect);
+        adminService.sendInvite(email, redirect);
+        return "redirect:/admin";
     }
 
     @PostMapping("/delete")
     public String deleteUser(@RequestParam("id") Long id, RedirectAttributes redirect) {
-        return adminService.deleteUser(id, redirect);
+        adminService.deleteUser(id, redirect);
+        return "redirect:/admin";
     }
 
     @PostMapping("/deactivate")
     public String updateUser(@RequestParam("id") Long id, RedirectAttributes redirect) {
-        return adminService.deactivateUser(id, redirect);
+        adminService.deactivateUser(id, redirect);
+        return "redirect:/admin";
     }
 }

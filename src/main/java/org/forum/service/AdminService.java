@@ -26,7 +26,7 @@ public class AdminService {
     private final UserRepository userRepository;
 
     @Transactional(rollbackFor = MailException.class)
-    public String sendInvite(String email, RedirectAttributes redirect) {
+    public void sendInvite(String email, RedirectAttributes redirect) {
         if (email != null && !email.isEmpty()) {
             Activation adminActive = new Activation(ActivationType.ADMIN_INVITE);
             try {
@@ -42,7 +42,6 @@ public class AdminService {
         } else {
             redirect.addFlashAttribute("error", "Please enter a valid email address");
         }
-        return "redirect:/admin";
     }
 
     public void getAllUsers(int page, String username, Model model) {
@@ -54,22 +53,21 @@ public class AdminService {
         model.addAttribute("totalPages", users.getTotalPages());
     }
 
-    public String deleteUser(Long id, RedirectAttributes redirect) {
+    public void deleteUser(Long id, RedirectAttributes redirect) {
         try {
             userRepository.deleteById(id);
             redirect.addFlashAttribute("success", "User deleted successfully");
         } catch (Exception e) {
             redirect.addFlashAttribute("error", "Error deleting user");
         }
-        return "redirect:/admin";
     }
 
-    public String deactivateUser(Long id, RedirectAttributes redirect) {
+    public void deactivateUser(Long id, RedirectAttributes redirect) {
         try {
             User user = userRepository.findById(id).orElse(null);
             if (user == null) {
                 redirect.addFlashAttribute("error", "User not found");
-                return "redirect:/admin";
+                return;
             }
             user.setActivated(false);
             userRepository.save(user);
@@ -77,6 +75,5 @@ public class AdminService {
         } catch (Exception e) {
             redirect.addFlashAttribute("error", "Error deactivating user");
         }
-        return "redirect:/admin";
     }
 }

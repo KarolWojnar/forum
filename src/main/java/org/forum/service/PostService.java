@@ -24,14 +24,13 @@ public class PostService {
     private final PostRepository postRepository;
     private final UserService userService;
 
-    public String createPost(PostDto post, RedirectAttributes redAttrs) {
+    public void createPost(PostDto post, RedirectAttributes redAttrs) {
         if (!ValidationUtil.validPost(post, redAttrs)) {
-            return "redirect:/posts/new";
+            throw new PostException(redAttrs.getFlashAttributes().get("error").toString(), "/posts/new");
         }
         User user = userService.findAuthenticatedUser(SecurityContextHolder.getContext().getAuthentication());
         postRepository.save(PostDto.toEntity(post, user));
         redAttrs.addFlashAttribute("success", "Post created successfully.");
-        return "redirect:/posts";
     }
 
     public Page<PostInfoDto> getPosts(int page, String keyWord, String sort, String direction) {
@@ -44,7 +43,7 @@ public class PostService {
         return postRepository.findPostsInfo(pageable, keyWord);
     }
 
-    public String archivePost(Long id) {
+    public void archivePost(Long id) {
         User user = userService.findAuthenticatedUser(SecurityContextHolder.getContext().getAuthentication());
         if (user.getRole().equals("ADMIN")) {
             postRepository.archivePost(id);
@@ -54,6 +53,5 @@ public class PostService {
                 throw new PostException("You are not authorized to archive this post.", "/posts");
             }
         }
-        return "posts";
     }
 }

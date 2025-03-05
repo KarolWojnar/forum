@@ -29,27 +29,34 @@ public class AuthController {
 
     @PostMapping("/forgot-password")
     public String forgotPassword(@RequestParam("email") String email, RedirectAttributes redirectAttributes) {
-        return userService.forgotPassword(email, redirectAttributes);
+        userService.forgotPassword(email, redirectAttributes);
+        return "redirect:/login";
     }
 
     @GetMapping("/reset-password/{uid}")
     public String resetPassword(@PathVariable("uid") String uid, Model model) {
-        return userService.resetPassword(uid, model);
+        userService.resetPassword(uid, model);
+        return "reset-password";
     }
 
     @PostMapping("/reset-password")
     public String resetPassword(@ModelAttribute ResetPasswordDto resetPasswordDto, RedirectAttributes redirectAttributes) {
-        return userService.changePassword(resetPasswordDto, redirectAttributes);
+        if (!userService.changePassword(resetPasswordDto, redirectAttributes)) {
+            return "redirect:/reset-password/" + resetPasswordDto.getToken();
+        }
+        return "redirect:/login";
     }
 
     @PostMapping("/register")
     public String register(@ModelAttribute UserDto userDto, @RequestParam("token") String token, RedirectAttributes redirectAttributes) {
-        return userService.createUser(userDto, redirectAttributes, token);
+        userService.createUser(userDto, redirectAttributes, token);
+        return "redirect:/login";
     }
 
     @GetMapping("/activate/{uid}")
     public String activate(@PathVariable("uid") String uid, Model model) {
-        return userService.activateUser(uid, model);
+        userService.activateUser(uid, model);
+        return "login";
     }
 
     @GetMapping("/login")

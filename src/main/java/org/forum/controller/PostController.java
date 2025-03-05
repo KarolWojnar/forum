@@ -54,16 +54,19 @@ public class PostController {
 
     @PostMapping("/new")
     public String createPost(@ModelAttribute PostDto post, RedirectAttributes redirect) {
-        return postService.createPost(post, redirect);
+        postService.createPost(post, redirect);
+        return "redirect:/posts";
     }
 
     @PostMapping("/{id}/comment")
     public String addComment(@PathVariable("id") Long postId, @ModelAttribute NewCommentDto comment, RedirectAttributes redirect) {
-        return commentService.addComment(postId, comment, redirect);
+        long id = commentService.addComment(postId, comment, redirect);
+        return "redirect:/posts/" + id;
     }
 
     @PatchMapping("/{id}/archive")
     public String archivePost(@PathVariable("id") Long id) {
-        return postService.archivePost(id);
+        postService.archivePost(id);
+        return "posts";
     }
 }

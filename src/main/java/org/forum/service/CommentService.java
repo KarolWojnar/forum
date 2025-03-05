@@ -2,6 +2,8 @@ package org.forum.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.forum.exception.ForumException;
+import org.forum.exception.PostException;
 import org.forum.model.dto.CommentDto;
 import org.forum.model.dto.NewCommentDto;
 import org.forum.model.entity.Comment;
@@ -14,11 +16,11 @@ import org.forum.repository.PostRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.ui.Model;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -30,24 +32,26 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final UserService userService;
 
-    public String addComment(Long id, NewCommentDto comment, RedirectAttributes redirect) {
+    public long addComment(Long id, NewCommentDto comment, RedirectAttributes redirect) {
         Optional<Post> post = postRepository.findById(id);
         if (post.isEmpty()) {
-            return "redirect:/posts";
+            throw new PostException("", "/posts");
         }
 
         if (!post.get().isActive()) {
-            redirect.addFlashAttribute("errorComment", "Post is archived and cannot be commented on.");
-            return "redirect:/posts";
+            throw new PostException("Post is archived and cannot be commented on.", "/posts");
         }
 
         if (!ValidationUtil.validComment(comment, redirect)) {
-            return "redirect:/posts/" + id;
+            throw new ForumException(redirect.getAttribute("error") != null
+                    ? Objects.requireNonNull(redirect.getAttribute("error")).toString()
+                    : "", "/posts/" + id);
         }
-        return createCommentAndSave(post.get(), comment, redirect);
+        createCommentAndSave(post.get(), comment, redirect);
+        return post.get().getId();
     }
 
-    private String createCommentAndSave(Post post, NewCommentDto comment, RedirectAttributes redirect) {
+    private void createCommentAndSave(Post post, NewCommentDto comment, RedirectAttributes redirect) {
         Comment newComment = new Comment();
         newComment.setContent(comment.getContent());
         newComment.setUser(userService.findAuthenticatedUser(SecurityContextHolder.getContext().getAuthentication()));
@@ -58,7 +62,6 @@ public class CommentService {
         }
         commentRepository.save(newComment);
         redirect.addFlashAttribute("success", "Comment added successfully.");
-        return "redirect:/posts/" + post.getId();
     }
 
     public List<CommentDto> getPostComments(Long id) {
@@ -66,7 +69,7 @@ public class CommentService {
         return comments.stream().map(CommentDto::fromEntity).toList();
     }
 
-    public String deleteComment(Long id) {
+    public void deleteComment(Long id) {
         User currentUser = userService.findAuthenticatedUser(SecurityContextHolder.getContext().getAuthentication());
         Comment comment = commentRepository.findById(id).orElse(null);
 
@@ -84,15 +87,9 @@ public class CommentService {
         } else {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorized to delete this comment.");
         }
-        return "posts";
     }
 
-    public String getReplies(Long id, Model redirect) {
-        List<Comment> comment = commentRepository.findAllByParentComment_Id(id);
-        if (comment.isEmpty()) {
-            return "redirect:/posts";
-        }
-        redirect.addAttribute("details", comment.stream().map(CommentDto::fromEntity).toList());
-        return "fragments/post :: list-comment";
+    public List<Comment> getReplies(Long id) {
+         return commentRepository.findAllByParentComment_Id(id);
     }
 }

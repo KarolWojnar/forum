@@ -17,11 +17,13 @@ public class UserController {
 
     @GetMapping("/{username}")
     public String getUser(@PathVariable("username") String username, Model model) {
-        return userService.getUserData(username, model);
+        userService.getUserData(username, model);
+        return "profile";
     }
 
     @PostMapping
     public String changeUsername(@ModelAttribute UserDto user, RedirectAttributes redirect, HttpSession session) {
-        return userService.updateUsername(user, redirect, session);
+        userService.updateUsername(user, redirect, session);
+        return "redirect:/login";
     }
 }
